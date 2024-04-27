@@ -150,8 +150,6 @@ namespace Radiation.Components
 				// Fake the needle jumping up when entering a radiation zone by altering the value.
 				if (radiation <= 0.4f)
 					radiation = 0.03f;
-				// TODO:
-				// Increase flicker range at higher radiation levels?
 				float flicker = UnityEngine.Random.Range(-0.3f, 0.3f);
 				meterstuff.value = Mathf.Clamp(1f - radiation + flicker, meterstuff.mutato.minValue, meterstuff.mutato.maxValue);
 			}
