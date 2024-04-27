@@ -80,6 +80,7 @@ namespace Radiation.Components
 		public void SetDissipationMultiplier(float dissipationMultiplier)
 		{
 			_dissipationMultiplier = dissipationMultiplier;
+			_dissipationLevel = -(_maxRadiation * _dissipationMultiplier);
 		}
 	}
 }
