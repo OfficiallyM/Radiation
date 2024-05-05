@@ -9,8 +9,8 @@ namespace Radiation.Components
 	[DisallowMultipleComponent]
 	internal sealed class Gauge : MonoBehaviour
 	{
-		public meterscript meter;
-		public attachablescript attach;
+		private meterscript _meter;
+		private attachablescript _attach;
 
 		public void Start()
 		{
@@ -25,7 +25,7 @@ namespace Radiation.Components
 					RemoveAllModClasses();
 					gameObject.GetComponentInChildren<MeshRenderer>().enabled = false;
 					compassscript component2 = gameObject.GetComponent<compassscript>();
-					meter = component2.meter;
+					_meter = component2.meter;
 					component2.enabled = false;
 					try
 					{
@@ -34,38 +34,38 @@ namespace Radiation.Components
 						gameObject.transform.localScale = new Vector3(-0.075f, 0.075f, 1E-06f);
 						gameObject.transform.localPosition = new Vector3(0.0f, 0.0f, -0.008f);
 						gameObject.AddComponent<MeshFilter>().mesh = itemdatabase.d.gerror.GetComponentInChildren<MeshFilter>().mesh;
-						meter.R = gameObject.AddComponent<MeshRenderer>();
-						meter.OffM = new Material(Shader.Find("Standard"));
-						meter.OffM.mainTexture = Radiation.textures[random.Next(0, Radiation.textures.Length)];
-						meter.OffM.SetFloat("_Mode", 2f);
-						meter.OffM.SetInt("_SrcBlend", 5);
-						meter.OffM.SetInt("_DstBlend", 10);
-						meter.OffM.SetInt("_ZWrite", 0);
-						meter.OffM.EnableKeyword("_ALPHATEST_ON");
-						meter.OffM.EnableKeyword("_ALPHABLEND_ON");
-						meter.OffM.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-						meter.OffM.SetFloat("_SpecularHighlights", 0.0f);
-						meter.OffM.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
-						meter.OffM.renderQueue = 3000;
-						meter.OnM = new Material(meter.OffM);
-						meter.OnM.EnableKeyword("_EMISSION");
-						meter.OnM.SetTexture("_EmissionMap", meter.OnM.mainTexture);
-						meter.OnM.name = "ON_Material";
-						meter.R.material = meter.OffM;
-						meter.R.reflectionProbeUsage = ReflectionProbeUsage.Off;
+						_meter.R = gameObject.AddComponent<MeshRenderer>();
+						_meter.OffM = new Material(Shader.Find("Standard"));
+						_meter.OffM.mainTexture = Radiation.textures[random.Next(0, Radiation.textures.Length)];
+						_meter.OffM.SetFloat("_Mode", 2f);
+						_meter.OffM.SetInt("_SrcBlend", 5);
+						_meter.OffM.SetInt("_DstBlend", 10);
+						_meter.OffM.SetInt("_ZWrite", 0);
+						_meter.OffM.EnableKeyword("_ALPHATEST_ON");
+						_meter.OffM.EnableKeyword("_ALPHABLEND_ON");
+						_meter.OffM.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+						_meter.OffM.SetFloat("_SpecularHighlights", 0.0f);
+						_meter.OffM.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+						_meter.OffM.renderQueue = 3000;
+						_meter.OnM = new Material(_meter.OffM);
+						_meter.OnM.EnableKeyword("_EMISSION");
+						_meter.OnM.SetTexture("_EmissionMap", _meter.OnM.mainTexture);
+						_meter.OnM.name = "ON_Material";
+						_meter.R.material = _meter.OffM;
+						_meter.R.reflectionProbeUsage = ReflectionProbeUsage.Off;
 					}
 					catch (Exception ex)
 					{
 						Debug.Log(ex.ToString());
 					}
-					attach = GetComponent<attachablescript>();
+					_attach = GetComponent<attachablescript>();
 					float minAngle = -155f;
 					float maxAngle = 195f;
 					float minValue = 0.0f;
 					Color color = Color.white;
 					try
 					{
-						string[] strArray = Path.GetFileNameWithoutExtension(meter.R.material.mainTexture.name).Split(new char[1]
+						string[] strArray = Path.GetFileNameWithoutExtension(_meter.R.material.mainTexture.name).Split(new char[1]
 						{
 							'f'
 						}, StringSplitOptions.RemoveEmptyEntries);
@@ -86,7 +86,7 @@ namespace Radiation.Components
 									maxAngle = result;
 							}
 							if (strArray.Length > 2 && strArray[2] != null)
-								meter.OnM.SetColor("_EmissionColor", new Color(0.4f, 1.2f, 0.4f));
+								_meter.OnM.SetColor("_EmissionColor", new Color(0.4f, 1.2f, 0.4f));
 							if (strArray.Length > 3)
 							{
 								if (strArray[3] != null)
@@ -100,7 +100,7 @@ namespace Radiation.Components
 					catch
 					{
 					}
-					foreach (meterscript.meterstuff meterstuff in meter.mutatok)
+					foreach (meterscript.meterstuff meterstuff in _meter.mutatok)
 					{
 						meterstuff.mutato.minAngle = minAngle;
 						meterstuff.mutato.maxAngle = maxAngle;
@@ -118,7 +118,7 @@ namespace Radiation.Components
 							meterstuff.mutato.lerpAngle = false;
 						}
 					}
-					foreach (meterscript.szamlap szamlap in meter.szamlapok)
+					foreach (meterscript.szamlap szamlap in _meter.szamlapok)
 					{
 						if (szamlap.forgo != null)
 						{
@@ -131,7 +131,7 @@ namespace Radiation.Components
 							}
 						}
 					}
-					if (attach != null)
+					if (_attach != null)
 						return;
 				}
 			}
@@ -141,9 +141,9 @@ namespace Radiation.Components
 
 		public void Update()
 		{
-			if (meter == null) return;
+			if (_meter == null) return;
 
-			foreach (meterscript.meterstuff meterstuff in meter.mutatok)
+			foreach (meterscript.meterstuff meterstuff in _meter.mutatok)
 			{
 				meterstuff.mutato.maxValue = 1f;
 				float radiation = RadiationController.I.GetRadiationLevel(gameObject.transform.position);

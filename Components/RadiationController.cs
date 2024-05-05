@@ -12,7 +12,7 @@ namespace Radiation.Components
 	public sealed class RadiationController : MonoBehaviour
 	{
 		public static RadiationController I;
-		private float dangerLevel = 0.7f;
+		private const float DangerLevel = 0.7f;
 
 		public void Awake()
 		{
@@ -47,7 +47,7 @@ namespace Radiation.Components
 		/// <returns>True if dangerous, otherwise false</returns>
 		public bool IsRadiationDangerous(float radiation)
 		{
-			if (radiation >= dangerLevel) return true;
+			if (radiation >= DangerLevel) return true;
 			return false;
 		}
 	}
