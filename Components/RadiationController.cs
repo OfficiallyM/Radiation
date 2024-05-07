@@ -48,6 +48,9 @@ namespace Radiation.Components
 
 			radiation += backgroundRadiation;
 
+			// Force remove all radiation if disabled.
+			if (Radiation.disable) radiation = 0;
+
 			return Mathf.Clamp01(radiation);
 		}
 

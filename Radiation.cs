@@ -1,5 +1,6 @@
 ﻿using Radiation.Components;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using TLDLoader;
@@ -22,11 +23,13 @@ namespace Radiation
 
 		internal static Mod mod;
 		internal static bool debug = false;
+		internal static bool disable = false;
 
 		public override void Config()
 		{
 			SettingAPI setting = new SettingAPI(this);
 			debug = setting.GUICheckbox(debug, "Debug mode", 10, 10);
+			disable = setting.GUICheckbox(disable, "Disable radiation", 10, 30);
 		}
 
 		public Radiation()
