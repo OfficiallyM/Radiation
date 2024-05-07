@@ -164,7 +164,7 @@ namespace Radiation.Components
 					if (component != this)
 					{
 						string lower = component.GetType().Name.ToString().ToLower();
-						if (lower.Contains("runden") || lower.Contains("tacho") || lower.Contains("ghaleas") || lower.Contains("temp") || lower.Contains("guage") || lower.Contains("fuel") || lower.Contains("guages") || lower.Contains("gauge") || lower.Contains("gauges") || lower.Contains("distance"))
+						if (lower.Contains("runden") || lower.Contains("tacho") || lower.Contains("ghaleas") || lower.Contains("temp") || lower.Contains("guage") || lower.Contains("fuel") || lower.Contains("guages") || lower.Contains("gauge") || lower.Contains("gauges") || lower.Contains("distance") || lower.Contains("radioactive"))
 						{
 							component.enabled = false;
 							Destroy(component);

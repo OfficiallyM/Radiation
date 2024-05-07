@@ -47,11 +47,16 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\The Long Drive\TheLongDrive_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\The Long Drive\TheLongDrive_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Components\Gauge.cs" />
     <Compile Include="Components\RadiationController.cs" />
     <Compile Include="Components\RadiationPoison.cs" />
+    <Compile Include="Components\Radioactive.cs" />
     <Compile Include="Modules\Logger.cs" />
     <Compile Include="Radiation.cs" />
     <Compile Include="AssemblyInfo.cs" />

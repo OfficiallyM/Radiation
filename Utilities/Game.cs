@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Radiation.Utilities
 {
@@ -18,5 +13,21 @@ namespace Radiation.Utilities
 		{
 			return new Vector3((float)(-mainscript.M.mainWorld.coord.x + objPos.x), (float)(-mainscript.M.mainWorld.coord.y + objPos.y), (float)(-mainscript.M.mainWorld.coord.z + objPos.z));
 		}
+
+		/// <summary>
+		/// Get the distance between two positions ignoring Y axis.
+		/// </summary>
+		/// <param name="from">Position 1</param>
+		/// <param name="to">Position 2</param>
+		/// <returns>Distance between both vectors</returns>
+		public static float Distance2D(Vector3 from, Vector3 to) => Mathf.Abs(from.x - to.x) + Mathf.Abs(from.z - to.z);
+
+		/// <summary>
+		/// Get the distance between two positions including Y axis.
+		/// </summary>
+		/// <param name="from">Position 1</param>
+		/// <param name="to">Position 2</param>
+		/// <returns>Distance between both vectors</returns>
+		public static float Distance3D(Vector3 from, Vector3 to) => Mathf.Abs(from.x - to.x) + Mathf.Abs(from.y - to.y) + Mathf.Abs(from.z - to.z);
 	}
 }
