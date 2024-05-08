@@ -1,17 +1,23 @@
 ﻿using Radiation.Components;
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using TLDLoader;
 using UnityEngine;
+//using AAAFramework;
 using Logger = Radiation.Modules.Logger;
+using System.Reflection;
+using System;
 
 namespace Radiation
 {
 	public class Radiation : Mod
 	{
-		public static Texture[] textures;
+		internal static Texture[] textures;
+		internal static GameObject SyringePrefab;
+		internal static Shader RadiationAwaySicknessShader;
+		internal static AudioClip RadiationAwayInjectClip;
+		internal static Sprite RadiationAwaySprite;
 
 		public override string ID => nameof(Radiation);
 		public override string Name => nameof(Radiation);
@@ -106,6 +112,45 @@ namespace Radiation
 				if (item.GetComponent<Radioactive>() == null)
 					item.AddComponent<Radioactive>();
 			}
+
+			// Load assets.
+			AssetBundle assetBundle = AssetBundle.LoadFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream($"{nameof(Radiation)}.radiation"));
+			SyringePrefab = (GameObject)assetBundle.LoadAsset("Syringe");
+			RadiationAwaySicknessShader = assetBundle.LoadAsset<Shader>("RadiationAwaySickness.shader");
+			RadiationAwayInjectClip = assetBundle.LoadAsset<AudioClip>("Inject.wav");
+			RadiationAwaySprite = assetBundle.LoadAsset<Sprite>("RadAway.png");
+			assetBundle.Unload(false);
+
+			// Make mod items via replacement.
+			itemdatabase.d.gzsemle.AddComponent<RadiationAway>();
+			itemdatabase.d.gzsemle.name = "Bread or RadAway";
+
+			// Create placeholders to show in M-ultiTool mod items category.
+			try
+			{
+				GameObject radAwayPlaceholder = new GameObject("RadAwayPlaceholder");
+				radAwayPlaceholder.transform.SetParent(mainscript.M.transform);
+				radAwayPlaceholder.SetActive(false);
+				GameObject radAway = new GameObject("RadAway");
+				radAway.transform.SetParent(radAwayPlaceholder.transform, false);
+				UnityEngine.Object.Instantiate(SyringePrefab, radAway.transform, false).transform.Rotate(0f, 180f, 0f);
+				Logger.Log("Instantiated during Placeholder spawn");
+				radAway.AddComponent<RadiationAwaySpawner>();
+				itemdatabase.d.items = Enumerable.Append(itemdatabase.d.items, radAway).ToArray();
+				radAway.GetComponentInChildren<Collider>().enabled = false;
+			}
+			catch (Exception ex)
+			{
+				Logger.Log($"Failed to create RadAway placeholder. Details: {ex}");
+			}
+
+			// Create mod items using AAAFramework.
+			//ModItem.WithGameObject()
+			//	.FromEmbeddedResource("radiation", "Syringe")
+			//	.SetMass(0.5f)
+			//	.SetSpawnChance(0.5f)
+			//	.AddPersistentComponent<RadiationAway>()
+			//	.Init();
 		}
 
 		public override void OnLoad()
@@ -134,6 +179,12 @@ namespace Radiation
 				Radioactive radioactive = root.AddComponent<Radioactive>();
 				radioactive.Init(Radioactive.RadiationType.Safe);
 			}
+		}
+
+		public override void Update()
+		{
+			//if (Input.GetKeyDown(KeyCode.Semicolon))
+			//	AAAFramework.AAAFramework.ItemDatabase.Where(i => i.Key == "Syringe").FirstOrDefault().Value.Spawn(mainscript.M.player.transform.position + Vector3.left * 1f);
 		}
 	}
 }
