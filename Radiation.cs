@@ -134,14 +134,23 @@ namespace Radiation
 				GameObject radAway = new GameObject("RadAway");
 				radAway.transform.SetParent(radAwayPlaceholder.transform, false);
 				UnityEngine.Object.Instantiate(SyringePrefab, radAway.transform, false).transform.Rotate(0f, 180f, 0f);
-				Logger.Log("Instantiated during Placeholder spawn");
 				radAway.AddComponent<RadiationAwaySpawner>();
 				itemdatabase.d.items = Enumerable.Append(itemdatabase.d.items, radAway).ToArray();
 				radAway.GetComponentInChildren<Collider>().enabled = false;
+
+				GameObject gaugePlaceholder = new GameObject("GaugePlaceholder");
+				gaugePlaceholder.transform.SetParent(mainscript.M.transform);
+				gaugePlaceholder.SetActive(false);
+				GameObject gauge = new GameObject("Geiger counter");
+				gauge.transform.SetParent(gaugePlaceholder.transform, false);
+				UnityEngine.Object.Instantiate(itemdatabase.d.gww2compass, gauge.transform, false).transform.Rotate(0f, 180f, 0f);
+				gauge.AddComponent<GaugeSpawner>();
+				itemdatabase.d.items = Enumerable.Append(itemdatabase.d.items, gauge).ToArray();
+				gauge.GetComponentInChildren<Collider>().enabled = false;
 			}
 			catch (Exception ex)
 			{
-				Logger.Log($"Failed to create RadAway placeholder. Details: {ex}");
+				Logger.Log($"Failed to create placeholders. Details: {ex}");
 			}
 
 			// Create mod items using AAAFramework.

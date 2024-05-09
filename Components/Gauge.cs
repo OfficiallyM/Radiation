@@ -20,7 +20,7 @@ namespace Radiation.Components
 				if (!component1.started)
 					component1.FStart();
 				System.Random random = new System.Random(component1.idInSave);
-				if (random.Next(0, 4) == 2)
+				if (IsGauge(component1.idInSave))
 				{
 					RemoveAllModClasses();
 					gameObject.GetComponentInChildren<MeshRenderer>().enabled = false;
@@ -179,5 +179,7 @@ namespace Radiation.Components
 				Destroy(this);
 			}
 		}
+
+		public static bool IsGauge(int id) => new System.Random(id).Next(4) == 2;
 	}
 }

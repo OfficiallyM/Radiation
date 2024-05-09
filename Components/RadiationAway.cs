@@ -17,7 +17,6 @@ namespace Radiation.Components
 				{
 					gameObject.GetComponentInChildren<MeshRenderer>().enabled = false;
 					_radAway = Instantiate(Radiation.SyringePrefab);
-					Logger.Log("Instantiated during RadiationAway.Start()");
 					_radAway.transform.SetParent(transform, false);
 					_radAway.transform.localScale = Radiation.SyringePrefab.transform.localScale;
 					_radAway.transform.localPosition = Vector3.zero;
