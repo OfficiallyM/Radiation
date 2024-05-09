@@ -22,7 +22,7 @@ namespace Radiation
 		public override string ID => nameof(Radiation);
 		public override string Name => nameof(Radiation);
 		public override string Author => "M-, Trorange";
-		public override string Version => "0.2.0";
+		public override string Version => "0.3.0";
 		public override bool UseAssetsFolder => true;
 		public override bool LoadInMenu => false;
 		public override bool LoadInDB => true;
