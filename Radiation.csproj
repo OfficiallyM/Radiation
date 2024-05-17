@@ -69,6 +69,7 @@
     <Compile Include="Components\RadiationAwaySickness.cs" />
     <Compile Include="Components\ItemSpawner.cs" />
     <Compile Include="Components\RadiationController.cs" />
+    <Compile Include="Components\NPCRadiationPoison.cs" />
     <Compile Include="Components\RadiationPoison.cs" />
     <Compile Include="Components\Radioactive.cs" />
     <Compile Include="Modules\Logger.cs" />

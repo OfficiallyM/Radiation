@@ -1,13 +1,13 @@
 ﻿using Radiation.Components;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using TLDLoader;
 using UnityEngine;
 //using AAAFramework;
 using Logger = Radiation.Modules.Logger;
-using System.Reflection;
-using System;
 
 namespace Radiation
 {
@@ -30,12 +30,14 @@ namespace Radiation
 		internal static Mod mod;
 		internal static bool debug = false;
 		internal static bool disable = false;
+		internal static bool disableForPlayer = false;
 
 		public override void Config()
 		{
 			SettingAPI setting = new SettingAPI(this);
 			debug = setting.GUICheckbox(debug, "Debug mode", 10, 10);
-			disable = setting.GUICheckbox(disable, "Disable radiation", 10, 30);
+			disable = setting.GUICheckbox(disable, "Disable radiation completely", 10, 30);
+			disableForPlayer = setting.GUICheckbox(disableForPlayer, "Disable radiation for player", 10, 50);
 		}
 
 		public Radiation()
@@ -104,12 +106,20 @@ namespace Radiation
 			{
 				"playerragdol",
 			};
+			string[] npcItems = new string[]
+			{
+				"munkas01",
+				"nyul",
+			};
 			foreach (GameObject item in itemdatabase.d.items)
 			{
 				// Exclude certain items.
-				if (itemsBlacklist.Contains(item.name.ToLower().Replace("(clone)", string.Empty))) continue;
+				string name = item.name.ToLower().Replace("(clone)", string.Empty);
+				if (itemsBlacklist.Contains(name)) continue;
 
-				if (item.GetComponent<Radioactive>() == null)
+				if (npcItems.Contains(name) && item.GetComponent<NPCRadiationPoison>() == null)
+					item.AddComponent<NPCRadiationPoison>();
+				else if (item.GetComponent<Radioactive>() == null)
 					item.AddComponent<Radioactive>();
 			}
 

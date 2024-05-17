@@ -39,6 +39,9 @@ namespace Radiation.Components
 		{
 			float radiation = RadiationController.I.GetRadiationLevel(gameObject.transform.position);
 
+			if (Radiation.disableForPlayer)
+				radiation = 0;
+
 			float radaway = _radiationAway;
 			// Radiationaway applied during danger, don't offer any benefit
 			// but still apply the side effects.
@@ -68,7 +71,7 @@ namespace Radiation.Components
 					DestroyImmediate(sickness);
 			}
 
-			if (_dangerLevel > 0 && _radiationLevel >= _dangerLevel)
+			if (_radiationLevel >= _dangerLevel)
 			{
 				// Radiation levels are high, start dropping player health.
 				survivalscript survival = gameObject.GetComponent<survivalscript>();
