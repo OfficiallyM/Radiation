@@ -54,8 +54,6 @@ namespace Radiation
 
 		public override void dbLoad()
 		{
-			Logger.Log($"Save data: {Utilities.Save.ReadWriteData()}", Logger.LogLevel.Debug);
-
 			// Attach radiation controller.
 			GameObject controller = new GameObject("RadiationController");
 			controller.transform.SetParent(mainscript.M.transform);
