@@ -1,13 +1,16 @@
 ﻿using Radiation.Components;
+using Radiation.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
+using System.Xml;
 using TLDLoader;
 using UnityEngine;
 //using AAAFramework;
-using Logger = Radiation.Modules.Logger;
+using Logger = Radiation.Utilities.Logger;
 
 namespace Radiation
 {
@@ -28,6 +31,8 @@ namespace Radiation
 		public override bool LoadInDB => true;
 
 		internal static Mod mod;
+
+		// Config variables.
 		internal static bool debug = false;
 		internal static bool disable = false;
 		internal static bool disableForPlayer = false;
@@ -49,6 +54,8 @@ namespace Radiation
 
 		public override void dbLoad()
 		{
+			Logger.Log($"Save data: {Utilities.Save.ReadWriteData()}", Logger.LogLevel.Debug);
+
 			// Attach radiation controller.
 			GameObject controller = new GameObject("RadiationController");
 			controller.transform.SetParent(mainscript.M.transform);
@@ -175,7 +182,7 @@ namespace Radiation
 		public override void OnLoad()
 		{
 			// Apply radioactivity when starting a new game.
-			if (mainscript.M.menu.DFMS.load) return;
+;			if (mainscript.M.menu.DFMS.load) return;
 
 			string[] itemsBlacklist = new string[]
 			{

@@ -1,7 +1,10 @@
-﻿using System.IO;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using TLDLoader;
 
-namespace Radiation.Modules
+namespace Radiation.Utilities
 {
 	internal static class Logger
 	{
@@ -41,7 +44,16 @@ namespace Radiation.Modules
 			if (!Radiation.debug && logLevel == LogLevel.Debug) return;
 
 			if (_logFile != string.Empty)
-				File.AppendAllText(_logFile, $"[{logLevel}] {msg}\r\n");
+				File.AppendAllText(_logFile, $"{DateTime.Now.ToString("s")} [{logLevel}] {msg}\r\n");
+
+			// Show stack trace in debug mode for anything higher than a warning.
+			if (Radiation.debug && logLevel >= LogLevel.Warning)
+			{
+				File.AppendAllText(_logFile, "Stack trace:\r\n");
+				StackTrace stackTrace = new StackTrace(1);
+				foreach (var frame in stackTrace.GetFrames())
+					File.AppendAllText(_logFile, $"{frame.GetMethod()}\r\n");
+			}
 		}
 	}
 }

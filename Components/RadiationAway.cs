@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using Logger = Radiation.Modules.Logger;
+using Logger = Radiation.Utilities.Logger;
 
 namespace Radiation.Components
 {

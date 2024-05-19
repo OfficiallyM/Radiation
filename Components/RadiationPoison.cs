@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Radiation.Core;
+using Radiation.Utilities;
+using System;
 using UnityEngine;
-using Logger = Radiation.Modules.Logger;
+using Logger = Radiation.Utilities.Logger;
 
 namespace Radiation.Components
 {
@@ -8,6 +10,7 @@ namespace Radiation.Components
 	internal sealed class RadiationPoison : MonoBehaviour
 	{
 		public static RadiationPoison I;
+		private bool _started = false;
 
 		// Radiation poison variables.
 		private float _radiationLevel = 0;
@@ -23,7 +26,6 @@ namespace Radiation.Components
 		private bool _radiationAwayAppliedWhenDangerous = false;
 		RadiationAwaySickness sickness;
 
-
 		public void Awake()
 		{
 			I = this;
@@ -33,10 +35,26 @@ namespace Radiation.Components
 		{
 			SetMaxRadiation(_defaultMaxRadiation);
 			_dissipationLevel = -(_maxRadiation * _dissipationMultiplier);
+
+			PoisonData poison = Save.GetPoisonData(0);
+			if (poison != null)
+			{
+				// Load existing data.
+				_radiationLevel = poison.RadiationLevel;
+				_radiationAway = poison.RadAway;
+			}
+
+			_started = true;
 		}
 
 		public void Update()
 		{
+			if (!_started)
+			{
+				Start();
+				return;
+			}
+
 			float radiation = RadiationController.I.GetRadiationLevel(gameObject.transform.position);
 
 			if (Radiation.disableForPlayer)
@@ -70,6 +88,14 @@ namespace Radiation.Components
 				if (sickness != null)
 					DestroyImmediate(sickness);
 			}
+
+			Save.SetPoisonData(new PoisonData()
+			{
+				// Use Id 0 to store the player data.
+				Id = 0,
+				RadiationLevel = _radiationLevel,
+				RadAway = _radiationAway,
+			});
 
 			if (_radiationLevel >= _dangerLevel)
 			{

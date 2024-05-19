@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Radiation.Core;
+using Radiation.Utilities;
+using System;
 using System.Collections;
 using System.Diagnostics.SymbolStore;
 using UnityEngine;
-using Logger = Radiation.Modules.Logger;
+using Logger = Radiation.Utilities.Logger;
 
 namespace Radiation.Components
 {
@@ -10,6 +12,8 @@ namespace Radiation.Components
 	internal sealed class NPCRadiationPoison : MonoBehaviour
 	{
 		public static NPCRadiationPoison I;
+		private tosaveitemscript _save = null;
+		private bool _started = false;
 
 		// Radiation poison variables.
 		private float _radiationLevel = 0;
@@ -27,10 +31,32 @@ namespace Radiation.Components
 		public void Start()
 		{
 			SetMaxRadiation(_defaultMaxRadiation);
+
+			_save = gameObject.GetComponent<tosaveitemscript>();
+			if (_save == null) return;
+
+			PoisonData poison = Save.GetPoisonData(_save.idInSave);
+			if (poison != null)
+			{
+				_radiationLevel = poison.RadiationLevel;
+				if (poison.IsNPCTransformed)
+				{
+					StartCoroutine(MakeIrradiated(gameObject));
+					_appliedAIChanges = true;
+				}
+			}
+
+			_started = true;
 		}
 
 		public void Update()
 		{
+			if (!_started)
+			{
+				Start();
+				return;
+			}
+
 			newAiScript ai = gameObject.GetComponent<newAiScript>();
 			nyulscript nyulscript = gameObject.GetComponent<nyulscript>();
 
@@ -53,6 +79,13 @@ namespace Radiation.Components
 				StartCoroutine(MakeIrradiated(gameObject));
 				_appliedAIChanges = true;
 			}
+
+			Save.SetPoisonData(new PoisonData()
+			{
+				Id = _save.idInSave,
+				RadiationLevel = _radiationLevel,
+				IsNPCTransformed = _appliedAIChanges
+			});
 		}
 
 		private IEnumerator MakeIrradiated(GameObject gameObject)
