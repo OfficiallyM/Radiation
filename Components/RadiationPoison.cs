@@ -27,10 +27,10 @@ namespace Radiation.Components
 		RadiationAwaySickness sickness;
 
 		// Radiation resist variables.
-		private int _radiationResistenceStacks = 0;
-		private float _radiationResistence = 0f;
-		private float _radiationResistenceLength = 0f;
-		private bool _radiationResistenceAppliedWhenDangerous = false;
+		private int _radiationResistanceStacks = 0;
+		private float _radiationResistance = 0f;
+		private float _radiationResistanceLength = 0f;
+		private bool _radiationResistanceAppliedWhenDangerous = false;
 		private survivalscript _survival = null;
 		private float _defaultFoodLoss = 0f;
 		private float _defaultColdWaterLossModifier = 0f;
@@ -90,19 +90,19 @@ namespace Radiation.Components
 				change = radiation * _poisonMultiplier;
 
 				// Factor in RadResist if not applied during danger.
-				if (!_radiationResistenceAppliedWhenDangerous && _radiationResistence > 0)
-					change *= -_radiationResistence;
+				if (!_radiationResistanceAppliedWhenDangerous && _radiationResistance > 0)
+					change *= -_radiationResistance;
 			}
 			_radiationLevel = Mathf.Clamp(_radiationLevel + change * Time.deltaTime, 0, _maxRadiation);
 
 			// Decrease radiationaway level.
 			_radiationAway = Mathf.Clamp(_radiationAway - 0.01f * Time.deltaTime, 0, _radiationAway);
 
-			_radiationResistenceLength = Mathf.Clamp(_radiationResistenceLength - (1f * Time.deltaTime), 0, _radiationResistenceLength);
+			_radiationResistanceLength = Mathf.Clamp(_radiationResistanceLength - (1f * Time.deltaTime), 0, _radiationResistanceLength);
 
 			// RadResist has ran out, decrease the value.
-			if (_radiationResistenceLength == 0 && _radiationResistence > 0)
-				_radiationResistence = Mathf.Clamp01(_radiationResistence -= 0.05f * Time.deltaTime);
+			if (_radiationResistanceLength == 0 && _radiationResistance > 0)
+				_radiationResistance = Mathf.Clamp01(_radiationResistance -= 0.05f * Time.deltaTime);
 
 			if (sickness != null)
 				// TODO: Not quite happy with the effect, it's a sharp cut off when it ends.
@@ -116,10 +116,10 @@ namespace Radiation.Components
 					DestroyImmediate(sickness);
 			}
 
-			if (_radiationResistence == 0 && _radiationResistenceStacks > 0)
+			if (_radiationResistance == 0 && _radiationResistanceStacks > 0)
 			{
-				_radiationResistenceStacks = 0;
-				_radiationResistenceAppliedWhenDangerous = false;
+				_radiationResistanceStacks = 0;
+				_radiationResistanceAppliedWhenDangerous = false;
 
 				if (_survival != null)
 				{
@@ -161,11 +161,11 @@ namespace Radiation.Components
 					GUI.Button(new Rect(0, y, 300, 20), $"Sickness intensity: {Math.Round(sickness.material.GetFloat("_Intensity"), 2)}");
 					y += 20f;
 				}
-				if (_radiationResistence != 0)
+				if (_radiationResistance != 0)
 				{
-					GUI.Button(new Rect(0, y, 300, 20), $"RadResist: {Math.Round(_radiationResistence * 100, 2)}");
+					GUI.Button(new Rect(0, y, 300, 20), $"RadResist: {Math.Round(_radiationResistance * 100, 2)}");
 					y += 20f;
-					GUI.Button(new Rect(0, y, 300, 20), $"RadResist length: {Math.Round(_radiationResistenceLength, 2)}");
+					GUI.Button(new Rect(0, y, 300, 20), $"RadResist length: {Math.Round(_radiationResistanceLength, 2)}");
 					y += 20f;
 				}
 				//GUI.Button(new Rect(0, y, 300, 20), $"Food loss: {Math.Round(mainscript.M.player.survival.foodLoss, 10)}");
@@ -226,28 +226,28 @@ namespace Radiation.Components
 		}
 
 		/// <summary>
-		/// Set radiation resistence to decrease radiation intake.
+		/// Set radiation resistance to decrease radiation intake.
 		/// </summary>
-		/// <param name="radiationResistence">Radiation resistence level</param>
-		/// <param name="radiationResistenceLength">Radiation resistence length in seconds</param>
-		public void SetRadiationResist(float radiationResistence, float radiationResistenceLength)
+		/// <param name="radiationResistance">Radiation resistance level</param>
+		/// <param name="radiationResistanceLength">Radiation resistance length in seconds</param>
+		public void SetRadiationResist(float radiationResistance, float radiationResistanceLength)
 		{
-			_radiationResistenceStacks++;
+			_radiationResistanceStacks++;
 			// Allow effect to be stackable.
-			_radiationResistence = Mathf.Clamp01(_radiationResistence += radiationResistence);
+			_radiationResistance = Mathf.Clamp01(_radiationResistance += radiationResistance);
 
-			if (_radiationResistenceLength < radiationResistenceLength)
-				_radiationResistenceLength = radiationResistenceLength;
+			if (_radiationResistanceLength < radiationResistanceLength)
+				_radiationResistanceLength = radiationResistanceLength;
 
-			// Track if radiation resistence was applied during danger.
+			// Track if radiation resistance was applied during danger.
 			if (RadiationController.I.IsRadiationDangerous(RadiationController.I.GetRadiationLevel(gameObject.transform.position)))
-				_radiationResistenceAppliedWhenDangerous = true;
+				_radiationResistanceAppliedWhenDangerous = true;
 
 			// Apply food and water loss multiplier if survival is enabled.
 			if (_survival != null)
 			{
 				// Water loss is based off foodLoss, the waterLoss property is unused.
-				_survival.foodLoss *= 5.5f / _radiationResistenceStacks;
+				_survival.foodLoss *= 5.5f / _radiationResistanceStacks;
 			}
 		}
 	}
