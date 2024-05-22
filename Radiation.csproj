@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Components\Gauge.cs" />
+    <Compile Include="Components\RadiationResist.cs" />
     <Compile Include="Components\RadiationAway.cs" />
     <Compile Include="Components\RadiationAwaySickness.cs" />
     <Compile Include="Components\ItemSpawner.cs" />

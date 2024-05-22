@@ -26,6 +26,16 @@ namespace Radiation.Components
 		private bool _radiationAwayAppliedWhenDangerous = false;
 		RadiationAwaySickness sickness;
 
+		// Radiation resist variables.
+		private int _radiationResistenceStacks = 0;
+		private float _radiationResistence = 0f;
+		private float _radiationResistenceLength = 0f;
+		private bool _radiationResistenceAppliedWhenDangerous = false;
+		private survivalscript _survival = null;
+		private float _defaultFoodLoss = 0f;
+		private float _defaultColdWaterLossModifier = 0f;
+		private float _defaultHotWaterLossModifier = 0f;
+
 		public void Awake()
 		{
 			I = this;
@@ -42,6 +52,14 @@ namespace Radiation.Components
 				// Load existing data.
 				_radiationLevel = poison.RadiationLevel;
 				_radiationAway = poison.RadAway;
+			}
+
+			_survival = gameObject.GetComponent<survivalscript>();
+			if (_survival != null)
+			{
+				_defaultFoodLoss = _survival.foodLoss;
+				_defaultColdWaterLossModifier = _survival.coldWaterLossModifier;
+				_defaultHotWaterLossModifier = _survival.hotWaterLossModifier;
 			}
 
 			_started = true;
@@ -70,11 +88,21 @@ namespace Radiation.Components
 			{
 				// Radiation level is dangerous, increase the player radiation levels.
 				change = radiation * _poisonMultiplier;
+
+				// Factor in RadResist if not applied during danger.
+				if (!_radiationResistenceAppliedWhenDangerous && _radiationResistence > 0)
+					change *= -_radiationResistence;
 			}
 			_radiationLevel = Mathf.Clamp(_radiationLevel + change * Time.deltaTime, 0, _maxRadiation);
 
 			// Decrease radiationaway level.
 			_radiationAway = Mathf.Clamp(_radiationAway - 0.01f * Time.deltaTime, 0, _radiationAway);
+
+			_radiationResistenceLength = Mathf.Clamp(_radiationResistenceLength - (1f * Time.deltaTime), 0, _radiationResistenceLength);
+
+			// RadResist has ran out, decrease the value.
+			if (_radiationResistenceLength == 0 && _radiationResistence > 0)
+				_radiationResistence = Mathf.Clamp01(_radiationResistence -= 0.05f * Time.deltaTime);
 
 			if (sickness != null)
 				// TODO: Not quite happy with the effect, it's a sharp cut off when it ends.
@@ -82,11 +110,23 @@ namespace Radiation.Components
 
 			if (_radiationAway == 0)
 			{
-				if (_radiationAwayAppliedWhenDangerous)
-					_radiationAwayAppliedWhenDangerous = false;
+				_radiationAwayAppliedWhenDangerous = false;
 
 				if (sickness != null)
 					DestroyImmediate(sickness);
+			}
+
+			if (_radiationResistence == 0 && _radiationResistenceStacks > 0)
+			{
+				_radiationResistenceStacks = 0;
+				_radiationResistenceAppliedWhenDangerous = false;
+
+				if (_survival != null)
+				{
+					_survival.foodLoss = _defaultFoodLoss;
+					_survival.coldWaterLossModifier = _defaultColdWaterLossModifier;
+					_survival.hotWaterLossModifier = _defaultHotWaterLossModifier;
+				}
 			}
 
 			Save.SetPoisonData(new PoisonData()
@@ -100,9 +140,8 @@ namespace Radiation.Components
 			if (_radiationLevel >= _dangerLevel)
 			{
 				// Radiation levels are high, start dropping player health.
-				survivalscript survival = gameObject.GetComponent<survivalscript>();
-				if (survival == null) return;
-				survival.DamageInstant(_radiationLevel / 25 * Time.deltaTime, true);
+				if (_survival == null) return;
+				_survival.DamageInstant(_radiationLevel / 25 * Time.deltaTime, true);
 			}
 		}
 
@@ -110,11 +149,28 @@ namespace Radiation.Components
 		{
 			if (Radiation.debug)
 			{
-				GUI.Button(new Rect(0, 0, 300, 20), $"Rads: {Math.Round(_radiationLevel * 100, 2)}");
-				GUI.Button(new Rect(0, 20, 300, 20), $"Level: {Math.Round((double)RadiationController.I.GetRadiationLevel(gameObject.transform.position) * 100, 2)}");
-				GUI.Button(new Rect(0, 40, 300, 20), $"RadAway: {Math.Round(_radiationAway * 100, 2)}");
+				float y = 0;
+				GUI.Button(new Rect(0, y, 300, 20), $"Rads: {Math.Round(_radiationLevel * 100, 2)}");
+				y += 20f;
+				GUI.Button(new Rect(0, y, 300, 20), $"Level: {Math.Round((double)RadiationController.I.GetRadiationLevel(gameObject.transform.position) * 100, 2)}");
+				y += 20f;
+				GUI.Button(new Rect(0, y, 300, 20), $"RadAway: {Math.Round(_radiationAway * 100, 2)}");
+				y += 20f;
 				if (sickness != null)
-					GUI.Button(new Rect(0, 60, 300, 20), $"Sickness intensity: {Math.Round(sickness.material.GetFloat("_Intensity"), 2)}");
+				{
+					GUI.Button(new Rect(0, y, 300, 20), $"Sickness intensity: {Math.Round(sickness.material.GetFloat("_Intensity"), 2)}");
+					y += 20f;
+				}
+				if (_radiationResistence != 0)
+				{
+					GUI.Button(new Rect(0, y, 300, 20), $"RadResist: {Math.Round(_radiationResistence * 100, 2)}");
+					y += 20f;
+					GUI.Button(new Rect(0, y, 300, 20), $"RadResist length: {Math.Round(_radiationResistenceLength, 2)}");
+					y += 20f;
+				}
+				//GUI.Button(new Rect(0, y, 300, 20), $"Food loss: {Math.Round(mainscript.M.player.survival.foodLoss, 10)}");
+				//y += 20f;
+				//GUI.Button(new Rect(0, y, 300, 20), $"Water loss: {Math.Round(mainscript.M.player.survival.waterLoss, 10)}");
 			}
 		}
 
@@ -167,6 +223,32 @@ namespace Radiation.Components
 				_radiationAwayAppliedWhenDangerous = true;
 
 			sickness = gameObject.GetComponent<fpscontroller>().Cam.gameObject.AddComponent<RadiationAwaySickness>();
+		}
+
+		/// <summary>
+		/// Set radiation resistence to decrease radiation intake.
+		/// </summary>
+		/// <param name="radiationResistence">Radiation resistence level</param>
+		/// <param name="radiationResistenceLength">Radiation resistence length in seconds</param>
+		public void SetRadiationResist(float radiationResistence, float radiationResistenceLength)
+		{
+			_radiationResistenceStacks++;
+			// Allow effect to be stackable.
+			_radiationResistence = Mathf.Clamp01(_radiationResistence += radiationResistence);
+
+			if (_radiationResistenceLength < radiationResistenceLength)
+				_radiationResistenceLength = radiationResistenceLength;
+
+			// Track if radiation resistence was applied during danger.
+			if (RadiationController.I.IsRadiationDangerous(RadiationController.I.GetRadiationLevel(gameObject.transform.position)))
+				_radiationResistenceAppliedWhenDangerous = true;
+
+			// Apply food and water loss multiplier if survival is enabled.
+			if (_survival != null)
+			{
+				// Water loss is based off foodLoss, the waterLoss property is unused.
+				_survival.foodLoss *= 5.5f / _radiationResistenceStacks;
+			}
 		}
 	}
 }

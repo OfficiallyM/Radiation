@@ -17,10 +17,12 @@ namespace Radiation
 	public class Radiation : Mod
 	{
 		internal static Texture[] textures;
-		internal static GameObject SyringePrefab;
+		internal static GameObject RadAwayPrefab;
+		internal static GameObject RadResistPrefab;
 		internal static Shader RadiationAwaySicknessShader;
 		internal static AudioClip RadiationAwayInjectClip;
 		internal static Sprite RadiationAwaySprite;
+		internal static Sprite RadiationResistSprite;
 
 		public override string ID => nameof(Radiation);
 		public override string Name => nameof(Radiation);
@@ -130,15 +132,18 @@ namespace Radiation
 
 			// Load assets.
 			AssetBundle assetBundle = AssetBundle.LoadFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream($"{nameof(Radiation)}.radiation"));
-			SyringePrefab = (GameObject)assetBundle.LoadAsset("Syringe");
+			RadAwayPrefab = assetBundle.LoadAsset<GameObject>("RadAway");
+			RadResistPrefab = assetBundle.LoadAsset<GameObject>("RadResist");
 			RadiationAwaySicknessShader = assetBundle.LoadAsset<Shader>("RadiationAwaySickness.shader");
 			RadiationAwayInjectClip = assetBundle.LoadAsset<AudioClip>("Inject.wav");
 			RadiationAwaySprite = assetBundle.LoadAsset<Sprite>("RadAway.png");
+			RadiationResistSprite = assetBundle.LoadAsset<Sprite>("RadResist.png");
 			assetBundle.Unload(false);
 
 			// Make mod items via replacement.
 			itemdatabase.d.gzsemle.AddComponent<RadiationAway>();
-			itemdatabase.d.gzsemle.name = "Bread or RadAway";
+			itemdatabase.d.gzsemle.AddComponent<RadiationResist>();
+			itemdatabase.d.gzsemle.name = "Bread, RadAway or RadResist";
 
 			// Create placeholders to show in M-ultiTool mod items category.
 			try
@@ -148,10 +153,20 @@ namespace Radiation
 				radAwayPlaceholder.SetActive(false);
 				GameObject radAway = new GameObject("RadAway");
 				radAway.transform.SetParent(radAwayPlaceholder.transform, false);
-				UnityEngine.Object.Instantiate(SyringePrefab, radAway.transform, false).transform.Rotate(0f, 180f, 0f);
+				UnityEngine.Object.Instantiate(RadAwayPrefab, radAway.transform, false).transform.Rotate(0f, 180f, 0f);
 				radAway.AddComponent<RadiationAwaySpawner>();
 				itemdatabase.d.items = Enumerable.Append(itemdatabase.d.items, radAway).ToArray();
 				radAway.GetComponentInChildren<Collider>().enabled = false;
+
+				GameObject radResistPlaceholder = new GameObject("RadResistPlaceholder");
+				radResistPlaceholder.transform.SetParent(mainscript.M.transform);
+				radResistPlaceholder.SetActive(false);
+				GameObject radResist = new GameObject("RadResist");
+				radResist.transform.SetParent(radResistPlaceholder.transform, false);
+				UnityEngine.Object.Instantiate(RadResistPrefab, radResist.transform, false).transform.Rotate(0f, 180f, 0f);
+				radResist.AddComponent<RadiationResistSpawner>();
+				itemdatabase.d.items = Enumerable.Append(itemdatabase.d.items, radResist).ToArray();
+				radResist.GetComponentInChildren<Collider>().enabled = false;
 
 				GameObject gaugePlaceholder = new GameObject("GaugePlaceholder");
 				gaugePlaceholder.transform.SetParent(mainscript.M.transform);
