@@ -33,8 +33,6 @@ namespace Radiation.Components
 		private bool _radiationResistanceAppliedWhenDangerous = false;
 		private survivalscript _survival = null;
 		private float _defaultFoodLoss = 0f;
-		private float _defaultColdWaterLossModifier = 0f;
-		private float _defaultHotWaterLossModifier = 0f;
 
 		public void Awake()
 		{
@@ -58,8 +56,6 @@ namespace Radiation.Components
 			if (_survival != null)
 			{
 				_defaultFoodLoss = _survival.foodLoss;
-				_defaultColdWaterLossModifier = _survival.coldWaterLossModifier;
-				_defaultHotWaterLossModifier = _survival.hotWaterLossModifier;
 			}
 
 			_started = true;
@@ -124,8 +120,6 @@ namespace Radiation.Components
 				if (_survival != null)
 				{
 					_survival.foodLoss = _defaultFoodLoss;
-					_survival.coldWaterLossModifier = _defaultColdWaterLossModifier;
-					_survival.hotWaterLossModifier = _defaultHotWaterLossModifier;
 				}
 			}
 
