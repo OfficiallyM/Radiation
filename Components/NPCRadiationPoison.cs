@@ -185,14 +185,5 @@ namespace Radiation.Components
 		{
 			_maxRadiation = _defaultMaxRadiation;
 		}
-
-		/// <summary>
-		/// Set radiation poisoning multiplier.
-		/// </summary>
-		/// <param name="poisonMultiplier">New radiation poisoning multiplier</param>
-		public void SetPoisonMultiplier(float poisonMultiplier)
-		{
-			_poisonMultiplier = poisonMultiplier;
-		}
 	}
 }

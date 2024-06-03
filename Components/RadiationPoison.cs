@@ -144,6 +144,8 @@ namespace Radiation.Components
 			if (Radiation.debug)
 			{
 				float y = 0;
+				GUI.Button(new Rect(0, y, 300, 20), $"Found geiger counter: {(Radiation.hasFoundGeigerCounter ? "Yes" : "No")}");
+				y += 20f;
 				GUI.Button(new Rect(0, y, 300, 20), $"Rads: {Math.Round(_radiationLevel * 100, 2)}");
 				y += 20f;
 				GUI.Button(new Rect(0, y, 300, 20), $"Level: {Math.Round((double)RadiationController.I.GetRadiationLevel(gameObject.transform.position) * 100, 2)}");

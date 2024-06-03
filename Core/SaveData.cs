@@ -17,5 +17,6 @@ namespace Radiation.Core
 	internal class SaveData
 	{
 		[DataMember] public List<PoisonData> PoisonData { get; set; }
+		[DataMember] public bool HasFoundGeigerCounter { get; set; }
 	}
 }

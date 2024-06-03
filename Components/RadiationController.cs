@@ -51,6 +51,9 @@ namespace Radiation.Components
 			// Force remove all radiation if disabled.
 			if (Radiation.disable) radiation = 0;
 
+			// Support for disableUntilGeigerCounter.
+			if (Radiation.disableUntilGeigerCounter && !Radiation.hasFoundGeigerCounter) radiation = 0;
+
 			return Mathf.Clamp01(radiation);
 		}
 

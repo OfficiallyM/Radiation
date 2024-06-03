@@ -1,5 +1,6 @@
 ﻿using Radiation.Components;
 using Radiation.Core;
+using Radiation.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,8 +27,8 @@ namespace Radiation
 
 		public override string ID => nameof(Radiation);
 		public override string Name => nameof(Radiation);
-		public override string Author => "M-, Trorange";
-		public override string Version => "0.4.0";
+		public override string Author => "M-, TR";
+		public override string Version => "0.5.0";
 		public override bool UseAssetsFolder => true;
 		public override bool LoadInMenu => false;
 		public override bool LoadInDB => true;
@@ -35,16 +36,35 @@ namespace Radiation
 		internal static Mod mod;
 
 		// Config variables.
+		private static float _radiationPoisonMultiplierDefault = 0.1f;
+		private static float _radiationPoisonMultiplier = 0.1f;
+		private static float _radiationPoisonDissipationMultiplierDefault = 0.05f;
+		private static float _radiationPoisonDissipationMultiplier = 0.05f;
+		internal static bool disableUntilGeigerCounter = false;
 		internal static bool debug = false;
 		internal static bool disable = false;
 		internal static bool disableForPlayer = false;
 
+		internal static bool hasFoundGeigerCounter = false;
+
 		public override void Config()
 		{
 			SettingAPI setting = new SettingAPI(this);
-			debug = setting.GUICheckbox(debug, "Debug mode", 10, 10);
-			disable = setting.GUICheckbox(disable, "Disable radiation completely", 10, 30);
-			disableForPlayer = setting.GUICheckbox(disableForPlayer, "Disable radiation for player", 10, 50);
+			// Actual settings.
+			disableUntilGeigerCounter = setting.GUICheckbox(disableUntilGeigerCounter, "Disable radiation until you find a geiger counter", 10, 10);
+			_radiationPoisonMultiplier = setting.GUISlider($"Poison multiplier (Default: {_radiationPoisonMultiplierDefault})", _radiationPoisonMultiplier, 0f, 1f, 10, 40);
+			_radiationPoisonDissipationMultiplier = setting.GUISlider($"Poison dissipation multiplier (Default: {_radiationPoisonDissipationMultiplierDefault})", _radiationPoisonDissipationMultiplier, 0f, 1f, 10, 140);
+
+			if (mainscript.M != null)
+			{
+				RadiationPoison.I.SetPoisonMultiplier(_radiationPoisonMultiplier);
+				RadiationPoison.I.SetDissipationMultiplier(_radiationPoisonDissipationMultiplier);
+			}
+
+			// Debug stuff.
+			debug = setting.GUICheckbox(debug, "Debug mode", 10, 220);
+			disable = setting.GUICheckbox(disable, "Disable radiation completely", 10, 240);
+			disableForPlayer = setting.GUICheckbox(disableForPlayer, "Disable radiation for player", 10, 260);
 		}
 
 		public Radiation()
@@ -194,8 +214,10 @@ namespace Radiation
 
 		public override void OnLoad()
 		{
+			hasFoundGeigerCounter = Save.GetHasFoundGeigerCounter();
+
 			// Apply radioactivity when starting a new game.
-;			if (mainscript.M.menu.DFMS.load) return;
+			if (mainscript.M.menu.DFMS.load) return;
 
 			string[] itemsBlacklist = new string[]
 			{
@@ -224,6 +246,13 @@ namespace Radiation
 		{
 			//if (Input.GetKeyDown(KeyCode.Semicolon))
 			//	AAAFramework.AAAFramework.ItemDatabase.Where(i => i.Key == "Syringe").FirstOrDefault().Value.Spawn(mainscript.M.player.transform.position + Vector3.left * 1f);
+
+			// Track hasFoundGeigerCounter.
+			if (!hasFoundGeigerCounter && mainscript.M.player.pickedUp != null && mainscript.M.player.pickedUp.GetComponent<Gauge>() != null)
+			{
+				hasFoundGeigerCounter = true;
+				Save.SetHasFoundGeigerCounter(hasFoundGeigerCounter);
+			}
 		}
 	}
 }

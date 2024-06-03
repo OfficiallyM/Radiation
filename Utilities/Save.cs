@@ -12,7 +12,7 @@ namespace Radiation.Utilities
 	internal static class Save
 	{
 		/// <summary>
-		/// Read/write data to game save
+		/// Read/write data to game save.
 		/// <para>Originally from RundensWheelPositionEditor</para>
 		/// </summary>
 		/// <param name="input">The string to write to the save</param>
@@ -55,7 +55,7 @@ namespace Radiation.Utilities
 		}
 
 		/// <summary>
-		/// Unserialize existing save data
+		/// Unserialize existing save data.
 		/// </summary>
 		/// <returns>Unserialized save data</returns>
 		private static SaveData Get()
@@ -79,7 +79,7 @@ namespace Radiation.Utilities
 		}
 
 		/// <summary>
-		/// Serialize save data and write to save
+		/// Serialize save data and write to save.
 		/// </summary>
 		/// <param name="data">The data to serialize</param>
 		private static void Set(SaveData data)
@@ -96,6 +96,8 @@ namespace Radiation.Utilities
 				// Convert stream to a string.
 				StreamReader reader = new StreamReader(ms);
 				string jsonString = reader.ReadToEnd();
+
+				ReadWriteData(jsonString);
 			}
 			catch (Exception ex)
 			{
@@ -134,6 +136,26 @@ namespace Radiation.Utilities
 		internal static PoisonData GetPoisonData(int Id)
 		{
 			return Get().PoisonData?.Where(d => d.Id == Id).FirstOrDefault();
+		}
+
+		/// <summary>
+		/// Wrapper for setting HasFoundGeigerCounter.
+		/// </summary>
+		/// <param name="hasFoundGeigerCounter">True if the player has found a geiger counter, otherwise false</param>
+		internal static void SetHasFoundGeigerCounter(bool hasFoundGeigerCounter)
+		{
+			SaveData data = Get();
+			data.HasFoundGeigerCounter = hasFoundGeigerCounter;
+			Set(data);
+		}
+
+		/// <summary>
+		/// Get HasFoundGeigerCounter.
+		/// </summary>
+		/// <returns>True if the player has found a geiger counter, otherwise false</returns>
+		internal static bool GetHasFoundGeigerCounter()
+		{
+			return Get().HasFoundGeigerCounter;
 		}
 	}
 }
