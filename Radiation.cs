@@ -25,8 +25,8 @@ namespace Radiation
 		public override string ID => nameof(Radiation);
 		public override string Name => nameof(Radiation);
 		public override string Author => "M-, TR";
-		public override string Version => "0.5.0";
-		public override bool UseAssetsFolder => true;
+		public override string Version => "1.0.3";
+		public override bool UseAssetsFolder => false;
 		public override bool LoadInMenu => false;
 		public override bool LoadInDB => true;
 
@@ -43,6 +43,8 @@ namespace Radiation
 		internal static bool disableForPlayer = false;
 
 		internal static bool hasFoundGeigerCounter = false;
+
+		private GameObject _lookingAt;
 
 		public override void Config()
 		{
@@ -81,16 +83,6 @@ namespace Radiation
 			// Attach gauges.
 			if (itemdatabase.d.gww2compass.GetComponent<Gauge>() == null)
 				itemdatabase.d.gww2compass.AddComponent<Gauge>();
-			if (textures == null)
-			{
-				List<Texture> textureList = new List<Texture>();
-				foreach (string file in Directory.GetFiles(ModLoader.GetModAssetsFolder(this)))
-				{
-					if (file.ToLower().EndsWith("dds"))
-						textureList.Add(LoadAssets.LoadTexture(this, Path.GetFileName(file)));
-				}
-				textures = textureList.ToArray();
-			}
 
 			// Attach player radiation poisioning.
 			if (mainscript.M.player.gameObject.GetComponent<RadiationPoison>() == null)
@@ -155,6 +147,18 @@ namespace Radiation
 			RadiationAwayInjectClip = assetBundle.LoadAsset<AudioClip>("Inject.wav");
 			RadiationAwaySprite = assetBundle.LoadAsset<Sprite>("RadAway.png");
 			RadiationResistSprite = assetBundle.LoadAsset<Sprite>("RadResist.png");
+
+			if (textures == null)
+			{
+				List<Texture> textureList = new List<Texture>();
+				foreach (string asset in assetBundle.GetAllAssetNames())
+				{
+					if (asset.ToLower().EndsWith("dds"))
+						textureList.Add(assetBundle.LoadAsset<Texture2D>(asset));
+				}
+				textures = textureList.ToArray();
+			}
+
 			assetBundle.Unload(false);
 
 			// Make mod items via replacement.
@@ -241,6 +245,15 @@ namespace Radiation
 
 		public override void Update()
 		{
+			try
+			{
+				Save.ExecuteQueue();
+			}
+			catch (Exception ex)
+			{
+				Logger.Log($"Error during queue execute. Details: {ex}", Logger.LogLevel.Error);
+			}
+
 			//if (Input.GetKeyDown(KeyCode.Semicolon))
 			//	AAAFramework.AAAFramework.ItemDatabase.Where(i => i.Key == "Syringe").FirstOrDefault().Value.Spawn(mainscript.M.player.transform.position + Vector3.left * 1f);
 
@@ -250,6 +263,56 @@ namespace Radiation
 				hasFoundGeigerCounter = true;
 				Save.SetHasFoundGeigerCounter(hasFoundGeigerCounter);
 			}
+
+			// Find object the player is looking at.
+			if (debug)
+			{
+				try
+				{
+					// TODO - Find cause of null reference error.
+					// Find object the player is looking at.
+					GameObject foundObject = null;
+					Physics.Raycast(mainscript.M.player.Cam.transform.position, mainscript.M.player.Cam.transform.forward, out var raycastHit, float.PositiveInfinity, mainscript.M.player.useLayer);
+
+					tosaveitemscript save = raycastHit.transform.gameObject.GetComponent<tosaveitemscript>();
+					if (save != null)
+						foundObject = raycastHit.transform.gameObject;
+
+					// Debug picked up if player is holding something.
+					if (mainscript.M.player.pickedUp != null)
+						foundObject = mainscript.M.player.pickedUp.gameObject;
+
+					// Debug held item if something is equipped.
+					if (mainscript.M.player.inHandP != null)
+						foundObject = mainscript.M.player.inHandP.gameObject;
+				
+					if (foundObject != null)
+					{
+						Radioactive radioactive = foundObject.GetComponent<Radioactive>();
+						if (radioactive == null)
+							foundObject = null;
+					}
+
+					_lookingAt = foundObject;
+				}
+				catch (Exception ex)
+				{
+					Logger.Log($"Debug object error. Details: {ex}", Logger.LogLevel.Error);
+				}
+			}
+		}
+
+		public override void OnGUI()
+		{
+			if (!debug || _lookingAt == null) return;
+
+			Radioactive radioactive = _lookingAt.GetComponent<Radioactive>();
+			float? rads = radioactive.GetRadiationLevel(GameUtilities.GetGlobalObjectPosition(mainscript.M.player.transform.position));
+			if (!rads.HasValue)
+				rads = 0;
+
+			GUI.Button(new Rect(300, 0, 300, 20), $"{_lookingAt.name}");
+			GUI.Button(new Rect(300, 20, 300, 20), $"Object rads: {rads}");
 		}
 	}
 }

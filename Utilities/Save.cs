@@ -11,6 +11,13 @@ namespace Radiation.Utilities
 {
 	internal static class Save
 	{
+		private static SaveData _data;
+
+		// Queue variables.
+		private static float _lastQueueRunTime = 0;
+		private static List<PoisonData> _queue = new List<PoisonData>();
+		private static int _queueInterval = 2;
+
 		/// <summary>
 		/// Read/write data to game save.
 		/// <para>Originally from RundensWheelPositionEditor</para>
@@ -62,13 +69,19 @@ namespace Radiation.Utilities
 		{
 			try
 			{
-				string existingString = ReadWriteData().Trim();
-				if (existingString != null && existingString != string.Empty)
+				if (_data == null)
 				{
-					MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(existingString));
-					DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(SaveData));
-					return jsonSerializer.ReadObject(ms) as SaveData;
+					// Save data isn't loaded, load it now.
+					string existingString = ReadWriteData().Trim();
+					if (existingString != null && existingString != string.Empty)
+					{
+						MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(existingString));
+						DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(SaveData));
+						_data = jsonSerializer.ReadObject(ms) as SaveData;
+					}
 				}
+
+				return _data != null ? _data : new SaveData();
 			}
 			catch (Exception ex)
 			{
@@ -85,10 +98,13 @@ namespace Radiation.Utilities
 		private static void Set(SaveData data)
 		{
 			try 
-			{ 
+			{
+				// Update loaded save data.
+				_data = data;
+
 				MemoryStream ms = new MemoryStream();
 				DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(SaveData));
-				jsonSerializer.WriteObject(ms, data);
+				jsonSerializer.WriteObject(ms, _data);
 
 				// Rewind stream.
 				ms.Seek(0, SeekOrigin.Begin);
@@ -111,11 +127,7 @@ namespace Radiation.Utilities
 		/// <param name="poisonData">Poison data to save</param>
 		internal static void SetPoisonData(PoisonData poisonData)
 		{
-			SaveData data = Get();
-			if (data.PoisonData == null)
-				data.PoisonData = new List<PoisonData>();
-
-			PoisonData existing = data.PoisonData.Where(d => d.Id == poisonData.Id).FirstOrDefault();
+			PoisonData existing = _queue.Where(d => d.Id == poisonData.Id).FirstOrDefault();
 			if (existing != null)
 			{
 				existing.RadiationLevel = poisonData.RadiationLevel;
@@ -123,9 +135,19 @@ namespace Radiation.Utilities
 				existing.IsNPCTransformed = poisonData.IsNPCTransformed;
 			}
 			else
-				data.PoisonData.Add(poisonData);
+				_queue.Add(poisonData);
+		}
 
-			Set(data);
+		/// <summary>
+		/// Delete poison data for a given ID.
+		/// </summary>
+		/// <param name="Id">ID to delete poison data for, if it exists</param>
+		internal static void DeletePoisonData(int Id)
+		{
+			SaveData save = Get();
+			PoisonData data = save.PoisonData.Where(d => d.Id == Id).FirstOrDefault();
+			save.PoisonData.Remove(data);
+			Set(save);
 		}
 
 		/// <summary>
@@ -156,6 +178,33 @@ namespace Radiation.Utilities
 		internal static bool GetHasFoundGeigerCounter()
 		{
 			return Get().HasFoundGeigerCounter;
+		}
+
+		internal static void ExecuteQueue()
+		{
+			int currentQueueInterval = Mathf.RoundToInt(Time.unscaledTime - _lastQueueRunTime);
+			if (currentQueueInterval < _queueInterval)
+				return;
+
+			SaveData data = Get();
+			foreach (PoisonData poisonData in _queue)
+			{
+				PoisonData existing = data.PoisonData.Where(d => d.Id == poisonData.Id).FirstOrDefault();
+				if (existing != null)
+				{
+					existing.RadiationLevel = poisonData.RadiationLevel;
+					existing.RadAway = poisonData.RadAway;
+					existing.IsNPCTransformed = poisonData.IsNPCTransformed;
+				}
+				else
+				{
+					data.PoisonData.Add(poisonData);
+				}
+			}
+
+			Set(data);
+			_queue.Clear();
+			_lastQueueRunTime = Time.unscaledTime;
 		}
 	}
 }

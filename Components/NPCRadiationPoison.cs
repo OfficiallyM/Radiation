@@ -58,13 +58,22 @@ namespace Radiation.Components
 			newAiScript ai = gameObject.GetComponent<newAiScript>();
 			nyulscript nyulscript = gameObject.GetComponent<nyulscript>();
 
-			// Return early if dead.
-			if (ai != null && ai.died) return;
-			if (nyulscript != null && !nyulscript.AI.alive) return;
+			// NPC has died, clear any save data and stop running.
+			if ((ai != null && ai.died) || (nyulscript != null && !nyulscript.AI.alive))
+			{
+				Save.DeletePoisonData(_save.idInSave);
+				Destroy(this);
+				return;
+			}
 
 			float radiation = RadiationController.I.GetRadiationLevel(gameObject.transform.position);
 
-			if (RadiationController.I.IsRadiationDangerous(radiation))
+			bool dataUpdate = true;
+
+			if (_radiationLevel == _maxRadiation)
+				dataUpdate = false;
+
+			if (dataUpdate && RadiationController.I.IsRadiationDangerous(radiation))
 			{
 				// Radiation level is dangerous, increase the player radiation levels.
 				float change = radiation * _poisonMultiplier;
@@ -78,12 +87,15 @@ namespace Radiation.Components
 				_appliedAIChanges = true;
 			}
 
-			Save.SetPoisonData(new PoisonData()
+			if (dataUpdate)
 			{
-				Id = _save.idInSave,
-				RadiationLevel = _radiationLevel,
-				IsNPCTransformed = _appliedAIChanges
-			});
+				Save.SetPoisonData(new PoisonData()
+				{
+					Id = _save.idInSave,
+					RadiationLevel = _radiationLevel,
+					IsNPCTransformed = _appliedAIChanges
+				});
+			}
 		}
 
 		private IEnumerator MakeIrradiated(GameObject gameObject)

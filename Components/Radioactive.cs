@@ -1,5 +1,6 @@
 ﻿using Radiation.Utilities;
 using UnityEngine;
+using Logger = Radiation.Utilities.Logger;
 
 namespace Radiation.Components
 {
@@ -108,7 +109,7 @@ namespace Radiation.Components
 		/// <returns>Radiation level between 0 and 1 or null if it should be ignored completely</returns>
 		public float? GetRadiationLevel(Vector3 position)
 		{
-			float distance = GameUtilities.Distance3D(position, transform.position);
+			float distance = GameUtilities.Distance3D(position, GameUtilities.GetGlobalObjectPosition(transform.position));
 			// Outside of affected range, return null to ignore this zone.
 			if (distance > _distance) return null;
 

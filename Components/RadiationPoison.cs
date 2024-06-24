@@ -1,6 +1,7 @@
 ﻿using Radiation.Core;
 using Radiation.Utilities;
 using System;
+using System.Linq;
 using UnityEngine;
 using Logger = Radiation.Utilities.Logger;
 
@@ -69,10 +70,10 @@ namespace Radiation.Components
 				return;
 			}
 
-			float radiation = RadiationController.I.GetRadiationLevel(gameObject.transform.position);
-
 			if (Radiation.disableForPlayer)
-				radiation = 0;
+				return;
+
+			float radiation = RadiationController.I.GetRadiationLevel(gameObject.transform.position);
 
 			float radaway = _radiationAway;
 			// Radiationaway applied during danger, don't offer any benefit
@@ -89,12 +90,28 @@ namespace Radiation.Components
 				if (!_radiationResistanceAppliedWhenDangerous && _radiationResistance > 0)
 					change *= -_radiationResistance;
 			}
-			_radiationLevel = Mathf.Clamp(_radiationLevel + change * Time.deltaTime, 0, _maxRadiation);
+			else if (_radiationLevel == 0)
+				change = 0;
+
+			bool dataUpdate = false;
+
+			if (change != 0)
+			{
+				_radiationLevel = Mathf.Clamp(_radiationLevel + change * Time.deltaTime, 0, _maxRadiation);
+				dataUpdate = true;
+			}
 
 			// Decrease radiationaway level.
-			_radiationAway = Mathf.Clamp(_radiationAway - 0.01f * Time.deltaTime, 0, _radiationAway);
+			if (_radiationAway > 0)
+			{
+				_radiationAway = Mathf.Clamp(_radiationAway - 0.01f * Time.deltaTime, 0, _radiationAway);
+				dataUpdate = true;
+			}
 
-			_radiationResistanceLength = Mathf.Clamp(_radiationResistanceLength - (1f * Time.deltaTime), 0, _radiationResistanceLength);
+			if (_radiationResistanceLength > 0)
+			{
+				_radiationResistanceLength = Mathf.Clamp(_radiationResistanceLength - (1f * Time.deltaTime), 0, _radiationResistanceLength);
+			}
 
 			// RadResist has ran out, decrease the value.
 			if (_radiationResistanceLength == 0 && _radiationResistance > 0)
@@ -104,12 +121,10 @@ namespace Radiation.Components
 				// TODO: Not quite happy with the effect, it's a sharp cut off when it ends.
 				sickness.material.SetFloat("_Intensity", Mathf.Clamp01(1f - (_radiationAway * 10)));
 
-			if (_radiationAway == 0)
+			if (_radiationAway == 0 && sickness != null)
 			{
 				_radiationAwayAppliedWhenDangerous = false;
-
-				if (sickness != null)
-					DestroyImmediate(sickness);
+				DestroyImmediate(sickness);
 			}
 
 			if (_radiationResistance == 0 && _radiationResistanceStacks > 0)
@@ -123,13 +138,16 @@ namespace Radiation.Components
 				}
 			}
 
-			Save.SetPoisonData(new PoisonData()
-			{
-				// Use Id 0 to store the player data.
-				Id = 0,
-				RadiationLevel = _radiationLevel,
-				RadAway = _radiationAway,
-			});
+			if (dataUpdate) 
+			{ 
+				Save.SetPoisonData(new PoisonData()
+				{
+					// Use Id 0 to store the player data.
+					Id = 0,
+					RadiationLevel = _radiationLevel,
+					RadAway = _radiationAway,
+				});
+			}
 
 			if (_radiationLevel >= _dangerLevel)
 			{
@@ -164,9 +182,7 @@ namespace Radiation.Components
 					GUI.Button(new Rect(0, y, 300, 20), $"RadResist length: {Math.Round(_radiationResistanceLength, 2)}");
 					y += 20f;
 				}
-				//GUI.Button(new Rect(0, y, 300, 20), $"Food loss: {Math.Round(mainscript.M.player.survival.foodLoss, 10)}");
-				//y += 20f;
-				//GUI.Button(new Rect(0, y, 300, 20), $"Water loss: {Math.Round(mainscript.M.player.survival.waterLoss, 10)}");
+				GUI.Button(new Rect(0, y, 300, 20), $"Tracked object/building count: {RadiationController.I.radioactives.Count}");
 			}
 		}
 

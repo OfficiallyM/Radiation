@@ -1,6 +1,7 @@
 ﻿using Radiation.Utilities;
 using System.Collections.Generic;
 using UnityEngine;
+using Logger = Radiation.Utilities.Logger;
 
 namespace Radiation.Components
 {
@@ -29,6 +30,9 @@ namespace Radiation.Components
 		/// <returns>Radiation level as float between 0 and 1</returns>
 		public float GetRadiationLevel(Vector3 pos)
 		{
+			// Force remove all radiation if disabled or disableUntilGeigerCounter isn't met.
+			if (Radiation.disable || (Radiation.disableUntilGeigerCounter && !Radiation.hasFoundGeigerCounter)) return 0;
+
 			// Convert local to global position.
 			pos = GameUtilities.GetGlobalObjectPosition(pos);
 
@@ -47,12 +51,6 @@ namespace Radiation.Components
 			}
 
 			radiation += backgroundRadiation;
-
-			// Force remove all radiation if disabled.
-			if (Radiation.disable) radiation = 0;
-
-			// Support for disableUntilGeigerCounter.
-			if (Radiation.disableUntilGeigerCounter && !Radiation.hasFoundGeigerCounter) radiation = 0;
 
 			return Mathf.Clamp01(radiation);
 		}

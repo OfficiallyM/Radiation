@@ -37,6 +37,7 @@ namespace Radiation.Components
 						_meter.R = gameObject.AddComponent<MeshRenderer>();
 						_meter.OffM = new Material(Shader.Find("Standard"));
 						_meter.OffM.mainTexture = Radiation.textures[random.Next(0, Radiation.textures.Length)];
+						_meter.OffM.mainTextureScale = new Vector2(1, -1);
 						_meter.OffM.SetFloat("_Mode", 2f);
 						_meter.OffM.SetInt("_SrcBlend", 5);
 						_meter.OffM.SetInt("_DstBlend", 10);
@@ -180,6 +181,6 @@ namespace Radiation.Components
 			}
 		}
 
-		public static bool IsGauge(int id) => new System.Random(id).Next(4) == 2;
+		public static bool IsGauge(int id) => new System.Random(id).Next(3) == 2;
 	}
 }
