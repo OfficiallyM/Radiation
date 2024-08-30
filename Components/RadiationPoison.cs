@@ -184,7 +184,18 @@ namespace Radiation.Components
 					y += 20f;
 				}
 				GUI.Button(new Rect(0, y, 300, 20), $"Tracked object/building count: {RadiationController.I.radioactives.Count}");
-			}
+                if (Radiation.debugShowNearbyRadioactives)
+                {
+                    y += 40f;
+                    GUI.Button(new Rect(0, y, 300, 20), $"Nearby radioactives:");
+                    y += 20f;
+                    foreach (var radioactive in RadiationController.I.radioactives.Where(r => !r.IsSafe() && r.GetRadiationLevel(gameObject.transform.position) > 0))
+                    {
+                        GUI.Button(new Rect(0, y, 300, 20), $"{radioactive.name} - {Math.Round((double)radioactive.GetRadiationLevel(gameObject.transform.position) * 100, 2)}");
+                        y += 20f;
+                    }
+                }
+            }
 		}
 
 		/// <summary>

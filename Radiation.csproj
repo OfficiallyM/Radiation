@@ -76,6 +76,7 @@
     <Compile Include="Components\RadiationPoison.cs" />
     <Compile Include="Components\Radioactive.cs" />
     <Compile Include="Core\SaveData.cs" />
+    <Compile Include="Extensions\VectorExtensions.cs" />
     <Compile Include="Utilities\Logger.cs" />
     <Compile Include="Radiation.cs" />
     <Compile Include="AssemblyInfo.cs" />

@@ -127,7 +127,7 @@ namespace Radiation.Utilities
         /// <param name="data">Data to insert</param>
         internal static void Upsert(Savable data)
         {
-            QueueEntry entry = _queue.Where(q => q.Data.Id == data.Id && q.Data.Type == data.Type).FirstOrDefault();
+            QueueEntry entry = _queue.Where(q => ((data.Id != -1 && q.Data.Id == data.Id) || (data.Id == -1 && q.Data.Position == data.Position)) && q.Data.Type == data.Type).FirstOrDefault();
             if (entry != null)
                 entry.Data = data;
             else
@@ -168,6 +168,17 @@ namespace Radiation.Utilities
 		{
             return (PoisonData)GetData(id, "poison");
 		}
+
+        /// <summary>
+        /// Get radioactive data for a given ID or global position.
+        /// </summary>
+        /// <param name="id">Id to check for or -1 to check by position</param>
+        /// <param name="position">Global position to check for</param>
+        /// <returns>Radioactive data if exists, otherwise null</returns>
+        internal static RadioactiveData GetRadioactiveData(int id, Vector3 position)
+        {
+            return (RadioactiveData)Get().Data?.Where(d => ((id != -1 && id == d.Id) || (id == -1 && Vector3.Distance(d.Position.Value, position) < 2)) && d.Type == "radioactive").FirstOrDefault();
+        }
 
 		/// <summary>
 		/// Wrapper for setting HasFoundGeigerCounter.

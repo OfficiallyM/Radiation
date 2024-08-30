@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using TLDLoader;
 using UnityEngine;
+
 //using AAAFramework;
 using Logger = Radiation.Utilities.Logger;
 
@@ -37,6 +38,7 @@ namespace Radiation
 		private static float _radiationPoisonDissipationMultiplier = 0.05f;
 		internal static bool disableUntilGeigerCounter = false;
 		internal static bool debug = false;
+        internal static bool debugShowNearbyRadioactives = false;
 		internal static bool disable = false;
 		internal static bool disableForPlayer = false;
 
@@ -60,8 +62,9 @@ namespace Radiation
 
 			// Debug stuff.
 			debug = setting.GUICheckbox(debug, "Debug mode", 10, 220);
-			disable = setting.GUICheckbox(disable, "Disable radiation completely", 10, 240);
-			disableForPlayer = setting.GUICheckbox(disableForPlayer, "Disable radiation for player", 10, 260);
+            debugShowNearbyRadioactives = setting.GUICheckbox(debugShowNearbyRadioactives, "Debug list nearby radioactive objects", 10, 240);
+            disable = setting.GUICheckbox(disable, "Disable radiation completely", 10, 260);
+			disableForPlayer = setting.GUICheckbox(disableForPlayer, "Disable radiation for player", 10, 280);
 		}
 
 		public Radiation()
@@ -100,9 +103,6 @@ namespace Radiation
 				if (building.GetComponent<Radioactive>() == null)
 				{
 					Radioactive radioactive = building.AddComponent<Radioactive>();
-					// Always create starter house as a safe zone.
-					if (building.name == "haz02")
-						radioactive.Init(Radioactive.RadiationType.Safe);
 				}
 			}
 
@@ -201,14 +201,6 @@ namespace Radiation
 			{
 				Logger.Log($"Failed to create placeholders. Details: {ex}");
 			}
-
-			// Create mod items using AAAFramework.
-			//ModItem.WithGameObject()
-			//	.FromEmbeddedResource("radiation", "Syringe")
-			//	.SetMass(0.5f)
-			//	.SetSpawnChance(0.5f)
-			//	.AddPersistentComponent<RadiationAway>()
-			//	.Init();
 		}
 
 		public override void OnLoad()
@@ -218,28 +210,41 @@ namespace Radiation
 			// Apply radioactivity when starting a new game.
 			if (mainscript.M.menu.DFMS.load) return;
 
-			string[] itemsBlacklist = new string[]
-			{
-				"playerragdol",
-			};
-
 			foreach (Collider collider in Physics.OverlapSphere(mainscript.M.player.transform.position, 400f))
 			{
 				GameObject root = collider.transform.root.gameObject;
 
-				// Exclude certain items.
-				if (itemsBlacklist.Contains(root.name.ToLower().Replace("(clone)", string.Empty))) continue;
+                CreateAsSafe(root);
 
-				// Don't attempt to apply twice to the same object.
-				if (root.GetComponent<Radioactive>() != null) continue;
-
-				// Don't apply if object isn't a building or saveable.
-				if (root.GetComponent<buildingscript>() == null && root.GetComponent<tosaveitemscript>() == null) continue;
-
-				Radioactive radioactive = root.AddComponent<Radioactive>();
-				radioactive.Init(Radioactive.RadiationType.Safe);
+                // Create any children as safe too.
+                foreach (tosaveitemscript save in root.GetComponentsInChildren<tosaveitemscript>())
+                    CreateAsSafe(save.gameObject);
 			}
 		}
+
+        /// <summary>
+        /// Create a GameObject as safe.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        private void CreateAsSafe(GameObject gameObject)
+        {
+            string[] itemsBlacklist = new string[]
+            {
+                "playerragdol",
+            };
+
+            // Exclude certain items.
+            if (itemsBlacklist.Contains(gameObject.name.ToLower().Replace("(clone)", string.Empty))) return;
+
+            // Don't attempt to apply twice to the same object.
+            if (gameObject.GetComponent<Radioactive>() != null) return;
+
+            // Don't apply if object isn't a building or saveable.
+            if (gameObject.GetComponent<buildingscript>() == null && gameObject.GetComponent<tosaveitemscript>() == null) return;
+
+            Radioactive radioactive = gameObject.AddComponent<Radioactive>();
+            radioactive.Init(Radioactive.RadiationType.Safe);
+        }
 
 		public override void Update()
 		{
@@ -251,9 +256,6 @@ namespace Radiation
 			{
 				Logger.Log($"Error during queue execute. Details: {ex}", Logger.LogLevel.Error);
 			}
-
-			//if (Input.GetKeyDown(KeyCode.Semicolon))
-			//	AAAFramework.AAAFramework.ItemDatabase.Where(i => i.Key == "Syringe").FirstOrDefault().Value.Spawn(mainscript.M.player.transform.position + Vector3.left * 1f);
 
 			// Track hasFoundGeigerCounter.
 			if (!hasFoundGeigerCounter && mainscript.M.player.pickedUp != null && mainscript.M.player.pickedUp.GetComponent<Gauge>() != null)
@@ -304,12 +306,12 @@ namespace Radiation
 			if (!debug || _lookingAt == null) return;
 
 			Radioactive radioactive = _lookingAt.GetComponent<Radioactive>();
-			float? rads = radioactive.GetRadiationLevel(GameUtilities.GetGlobalObjectPosition(mainscript.M.player.transform.position));
+			float? rads = radioactive.GetRadiationLevel(mainscript.M.player.transform.position);
 			if (!rads.HasValue)
 				rads = 0;
 
 			GUI.Button(new Rect(300, 0, 300, 20), $"{_lookingAt.name}");
-			GUI.Button(new Rect(300, 20, 300, 20), $"Object rads: {rads}");
+			GUI.Button(new Rect(300, 20, 300, 20), $"Object rads: {Math.Round((double)rads * 100, 2)}");
 		}
 	}
 }

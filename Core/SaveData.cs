@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using UnityEngine;
 
 namespace Radiation.Core
 {
@@ -10,6 +11,14 @@ namespace Radiation.Core
     {
         upsert,
         delete,
+    }
+
+    [DataContract]
+    internal sealed class RadioactiveData : Savable
+    {
+        [DataMember] public int RadiationType { get; set;  }
+        [DataMember] public float RadiationLevel { get; set; }
+        [DataMember] public float Distance { get; set; }
     }
 
 	[DataContract]
@@ -33,6 +42,7 @@ namespace Radiation.Core
     internal abstract class Savable
     {
         [DataMember] public int Id { get; set; }
+        [DataMember] public Vector3? Position { get; set; } = null;
         [DataMember] public string Type { get; set; }
 
         private static IEnumerable<Type> _knownTypes;

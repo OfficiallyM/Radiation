@@ -1,4 +1,6 @@
-﻿using Radiation.Utilities;
+﻿using Radiation.Core;
+using Radiation.Extensions;
+using Radiation.Utilities;
 using UnityEngine;
 using Logger = Radiation.Utilities.Logger;
 
@@ -31,11 +33,25 @@ namespace Radiation.Components
 		/// <param name="radiationLevel">Radiation level</param>
 		public void Init(RadiationType type, float? distance = null, float? radiationLevel = null)
 		{
-			_type = type;
+            _zoneType = gameObject.GetComponent<buildingscript>() != null ? RadiationZoneType.Zone : RadiationZoneType.Object;
+
+            _type = type;
 			if (distance.HasValue)
 				_distance = distance.Value;
 			if (radiationLevel.HasValue)
 				_radiationLevel = radiationLevel.Value;
+
+
+            // Zones will use -1 and so will be matched on position instead
+            Save.Upsert(new RadioactiveData()
+            {
+                Id = GetSaveId(),
+                Position = GameUtilities.GetGlobalObjectPosition(transform.position),
+                Type = "radioactive",
+                RadiationType = (int)_type,
+                RadiationLevel = _radiationLevel,
+                Distance = _distance,
+            });
 
 			_isRandom = false;
 		}
@@ -43,6 +59,18 @@ namespace Radiation.Components
 		public void Start()
 		{
 			_zoneType = gameObject.GetComponent<buildingscript>() != null ? RadiationZoneType.Zone : RadiationZoneType.Object;
+
+            // Attempt to load from save data.
+            int saveId = GetSaveId();
+            RadioactiveData saveData = Save.GetRadioactiveData(saveId, GameUtilities.GetGlobalObjectPosition(transform.position).Round());
+            if (saveData != null)
+            {
+                _isRandom = false;
+
+                _type = (RadiationType)saveData.RadiationType;
+                _radiationLevel = saveData.RadiationLevel;
+                _distance = saveData.Distance;
+            }
 
 			if (_isRandom)
 			{
@@ -61,8 +89,8 @@ namespace Radiation.Components
 					distanceMin = 50f;
 					distanceMax = 200f;
 
-					// 1/4 chance of zone being a safe zone.
-					if (random.Next(0, 4) == 0)
+					// 1/2 chance of zone being a safe zone.
+					if (random.Next(0, 4) <= 1)
 						_type = RadiationType.Safe;
 				}
 				else
@@ -88,13 +116,58 @@ namespace Radiation.Components
 					}
 				}
 
-				_radiationLevel = (float)random.Next((int)levelMin * 100, (int)(levelMax * 100) + 1) / 100;
+                // Divide radiation level by the number of child parts to average it across all of them.
+                int childCount = 1;
+                partconditionscript rootPart = gameObject.GetComponent<partconditionscript>();
+                if (rootPart != null)
+                    childCount = rootPart.childs.Count;
+
+                _radiationLevel = (float)random.Next((int)levelMin * 100, (int)(levelMax * 100) + 1) / childCount / 100;
 				_distance = random.Next((int)distanceMin, (int)distanceMax);
-			}
+
+                // Apply radioactive to any object children.
+                if (_zoneType == RadiationZoneType.Object)
+                {
+                    if (rootPart != null)
+                    {
+                        foreach (partconditionscript child in rootPart.childs)
+                        {
+                            if (child.gameObject.GetComponent<tosaveitemscript>() != null && child.gameObject.GetComponent<Radioactive>() == null)
+                            {
+                                Radioactive childRadioactive = child.gameObject.AddComponent<Radioactive>();
+                                childRadioactive.Init(_type, _distance, _radiationLevel);
+                            }
+                        }
+                    }
+                }
+
+                // Save data.
+                // Zones will use -1 and so will be matched on position instead.
+                saveId = GetSaveId();
+
+                Save.Upsert(new RadioactiveData()
+                {
+                    Id = saveId,
+                    Position = GameUtilities.GetGlobalObjectPosition(transform.position),
+                    Type = "radioactive",
+                    RadiationType = (int)_type,
+                    RadiationLevel = _radiationLevel,
+                    Distance = _distance,
+                });
+            }
 
 			// Track all radioactive zones/objects.
 			RadiationController.I.radioactives.Add(this);
 		}
+
+        /// <summary>
+        /// Get save ID for object.
+        /// </summary>
+        /// <returns>Save ID</returns>
+        private int GetSaveId()
+        {
+            return _zoneType == RadiationZoneType.Zone ? -1 : gameObject.GetComponent<tosaveitemscript>() != null ? gameObject.GetComponent<tosaveitemscript>().idInSave : -1;
+        }
 
 		public void OnDestroy()
 		{
@@ -124,5 +197,32 @@ namespace Radiation.Components
 		{
 			return _type == RadiationType.Safe;
 		}
+
+        /// <summary>
+        /// Get radiation level.
+        /// </summary>
+        /// <returns>Radiation level</returns>
+        internal float GetRadiationLevel()
+        {
+            return _radiationLevel;
+        }
+
+        /// <summary>
+        /// Get radiation distance.
+        /// </summary>
+        /// <returns>Radiation distance</returns>
+        internal float GetDistance()
+        {
+            return _distance;
+        }
+
+        /// <summary>
+        /// Get radiation type.
+        /// </summary>
+        /// <returns>Radiation type</returns>
+        internal RadiationType GetRadiationType()
+        {
+            return _type;
+        }
 	}
 }
