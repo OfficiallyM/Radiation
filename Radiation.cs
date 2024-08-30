@@ -25,17 +25,15 @@ namespace Radiation
 		public override string ID => nameof(Radiation);
 		public override string Name => nameof(Radiation);
 		public override string Author => "M-, TR";
-		public override string Version => "1.0.3";
-		public override bool UseAssetsFolder => false;
-		public override bool LoadInMenu => false;
+		public override string Version => "1.1.0";
 		public override bool LoadInDB => true;
 
 		internal static Mod mod;
 
 		// Config variables.
-		private static float _radiationPoisonMultiplierDefault = 0.1f;
+		private static readonly float _radiationPoisonMultiplierDefault = 0.1f;
 		private static float _radiationPoisonMultiplier = 0.1f;
-		private static float _radiationPoisonDissipationMultiplierDefault = 0.05f;
+		private static readonly float _radiationPoisonDissipationMultiplierDefault = 0.05f;
 		private static float _radiationPoisonDissipationMultiplier = 0.05f;
 		internal static bool disableUntilGeigerCounter = false;
 		internal static bool debug = false;
@@ -269,12 +267,11 @@ namespace Radiation
 			{
 				try
 				{
-					// TODO - Find cause of null reference error.
 					// Find object the player is looking at.
 					GameObject foundObject = null;
 					Physics.Raycast(mainscript.M.player.Cam.transform.position, mainscript.M.player.Cam.transform.forward, out var raycastHit, float.PositiveInfinity, mainscript.M.player.useLayer);
 
-					tosaveitemscript save = raycastHit.transform.gameObject.GetComponent<tosaveitemscript>();
+					tosaveitemscript save = raycastHit.transform?.gameObject?.GetComponent<tosaveitemscript>();
 					if (save != null)
 						foundObject = raycastHit.transform.gameObject;
 

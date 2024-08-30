@@ -60,7 +60,7 @@ namespace Radiation.Components
 						Debug.Log(ex.ToString());
 					}
 					_attach = GetComponent<attachablescript>();
-					float minAngle = -155f;
+                    float minAngle = -155f;
 					float maxAngle = 195f;
 					float minValue = 0.0f;
 					Color color = Color.white;
@@ -181,6 +181,6 @@ namespace Radiation.Components
 			}
 		}
 
-		public static bool IsGauge(int id) => new System.Random(id).Next(3) == 2;
+		public static bool IsGauge(int id) => new System.Random(id).Next(7) == 4;
 	}
 }

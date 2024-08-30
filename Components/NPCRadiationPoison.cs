@@ -20,6 +20,7 @@ namespace Radiation.Components
 		private float _dangerLevel = 0.7f;
 		private float _poisonMultiplier = 0.1f;
 		private bool _appliedAIChanges = false;
+        private bool _areChangesApplying = false;
 
 		public void Awake()
 		{
@@ -61,8 +62,11 @@ namespace Radiation.Components
 			// NPC has died, clear any save data and stop running.
 			if ((ai != null && ai.died) || (nyulscript != null && !nyulscript.AI.alive))
 			{
-				Save.DeletePoisonData(_save.idInSave);
-				Destroy(this);
+				Save.Delete(_save.idInSave, "poison");
+                // Wait for irradiated transformation to complete before destroying
+                // to avoid being stuck mid transition.
+                if (!_areChangesApplying)
+				    Destroy(this);
 				return;
 			}
 
@@ -89,9 +93,10 @@ namespace Radiation.Components
 
 			if (dataUpdate)
 			{
-				Save.SetPoisonData(new PoisonData()
+				Save.Upsert(new PoisonData()
 				{
 					Id = _save.idInSave,
+                    Type = "poison",
 					RadiationLevel = _radiationLevel,
 					IsNPCTransformed = _appliedAIChanges
 				});
@@ -100,6 +105,7 @@ namespace Radiation.Components
 
 		private IEnumerator MakeIrradiated(GameObject gameObject)
 		{
+            _areChangesApplying = true;
 			newAiScript ai = gameObject.GetComponent<newAiScript>();
 			nyulscript nyulscript = gameObject.GetComponent<nyulscript>(); 
 
@@ -177,6 +183,8 @@ namespace Radiation.Components
 				nyulscript.move.speed *= 1.5f;
 				nyulscript.move.rotSpeed *= 2f;
 			}
+
+            _areChangesApplying = false;
 		}
 
 		/// <summary>

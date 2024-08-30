@@ -140,10 +140,11 @@ namespace Radiation.Components
 
 			if (dataUpdate) 
 			{ 
-				Save.SetPoisonData(new PoisonData()
+				Save.Upsert(new PoisonData()
 				{
 					// Use Id 0 to store the player data.
 					Id = 0,
+                    Type = "poison",
 					RadiationLevel = _radiationLevel,
 					RadAway = _radiationAway,
 				});

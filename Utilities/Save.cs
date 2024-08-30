@@ -15,8 +15,8 @@ namespace Radiation.Utilities
 
 		// Queue variables.
 		private static float _lastQueueRunTime = 0;
-		private static List<PoisonData> _queue = new List<PoisonData>();
-		private static int _queueInterval = 2;
+		private static List<QueueEntry> _queue = new List<QueueEntry>();
+		private static readonly int _queueInterval = 2;
 
 		/// <summary>
 		/// Read/write data to game save.
@@ -24,7 +24,7 @@ namespace Radiation.Utilities
 		/// </summary>
 		/// <param name="input">The string to write to the save</param>
 		/// <returns>The read/written string</returns>
-		internal static string ReadWriteData(string input = null)
+		private static string ReadWriteData(string input = null)
 		{
 			try
 			{
@@ -121,43 +121,52 @@ namespace Radiation.Utilities
 			}
 		}
 
-		/// <summary>
-		/// Set poison data.
-		/// </summary>
-		/// <param name="poisonData">Poison data to save</param>
-		internal static void SetPoisonData(PoisonData poisonData)
-		{
-			PoisonData existing = _queue.Where(d => d.Id == poisonData.Id).FirstOrDefault();
-			if (existing != null)
-			{
-				existing.RadiationLevel = poisonData.RadiationLevel;
-				existing.RadAway = poisonData.RadAway;
-				existing.IsNPCTransformed = poisonData.IsNPCTransformed;
-			}
-			else
-				_queue.Add(poisonData);
-		}
+        /// <summary>
+        /// Update if already exists, otherwise insert new save data.
+        /// </summary>
+        /// <param name="data">Data to insert</param>
+        internal static void Upsert(Savable data)
+        {
+            QueueEntry entry = _queue.Where(q => q.Data.Id == data.Id && q.Data.Type == data.Type).FirstOrDefault();
+            if (entry != null)
+                entry.Data = data;
+            else
+                _queue.Add(new QueueEntry() { Data = data });
+        }
 
-		/// <summary>
-		/// Delete poison data for a given ID.
-		/// </summary>
-		/// <param name="Id">ID to delete poison data for, if it exists</param>
-		internal static void DeletePoisonData(int Id)
-		{
-			SaveData save = Get();
-			PoisonData data = save.PoisonData.Where(d => d.Id == Id).FirstOrDefault();
-			save.PoisonData.Remove(data);
-			Set(save);
-		}
+        /// <summary>
+        /// Delete save data.
+        /// </summary>
+        /// <param name="id">Id of data to delete</param>
+        /// <param name="type">Data type of data to delete</param>
+        internal static void Delete(int id, string type)
+        {
+            QueueEntry entry = _queue.Where(q => q.Data.Id == id && q.Data.Type == type).FirstOrDefault();
+            if (entry != null)
+                entry.QueueType = QueueType.delete;
+            else
+                _queue.Add(new QueueEntry() { QueueType = QueueType.delete, Data = new ToDelete() { Id = id, Type = type } });
+        }
+
+        /// <summary>
+        /// Get save data by id and type.
+        /// </summary>
+        /// <param name="id">Id to search</param>
+        /// <param name="type">Data type</param>
+        /// <returns>Save data if exists, otherwise null</returns>
+        private static Savable GetData(int id, string type)
+        {
+            return Get().Data?.Where(d => d.Id == id && d.Type == type).FirstOrDefault();
+        }
 
 		/// <summary>
 		/// Get poison data for a given ID.
 		/// </summary>
 		/// <param name="Id">ID to find data for</param>
 		/// <returns>Poison data if exists, otherwise null</returns>
-		internal static PoisonData GetPoisonData(int Id)
+		internal static PoisonData GetPoisonData(int id)
 		{
-			return Get().PoisonData?.Where(d => d.Id == Id).FirstOrDefault();
+            return (PoisonData)GetData(id, "poison");
 		}
 
 		/// <summary>
@@ -180,30 +189,48 @@ namespace Radiation.Utilities
 			return Get().HasFoundGeigerCounter;
 		}
 
+        /// <summary>
+        /// Trigger save data queue execution.
+        /// </summary>
 		internal static void ExecuteQueue()
 		{
 			int currentQueueInterval = Mathf.RoundToInt(Time.unscaledTime - _lastQueueRunTime);
 			if (currentQueueInterval < _queueInterval)
 				return;
 
-			SaveData data = Get();
-			foreach (PoisonData poisonData in _queue)
-			{
-				PoisonData existing = data.PoisonData.Where(d => d.Id == poisonData.Id).FirstOrDefault();
-				if (existing != null)
-				{
-					existing.RadiationLevel = poisonData.RadiationLevel;
-					existing.RadAway = poisonData.RadAway;
-					existing.IsNPCTransformed = poisonData.IsNPCTransformed;
-				}
-				else
-				{
-					data.PoisonData.Add(poisonData);
-				}
-			}
+            if (_queue.Count > 0)
+            {
+                int upserts = _queue.Where(q => q.QueueType == QueueType.upsert).ToList().Count;
+                int deletes = _queue.Where(q => q.QueueType == QueueType.delete).ToList().Count;
+                Logger.Log($"Processing queue: {_queue.Count} items, {upserts} upserts, {deletes} deletes", Logger.LogLevel.Debug);
 
-			Set(data);
-			_queue.Clear();
+			    SaveData data = Get();
+                if (data.Data == null)
+                    data.Data = new List<Savable>();
+
+			    foreach (QueueEntry entry in _queue)
+			    {
+                    switch (entry.QueueType)
+                    {
+                        case QueueType.upsert:
+				            Savable existing = data.Data.Where(d => d.Id == entry.Data.Id).FirstOrDefault();
+				            if (existing != null)
+                                existing = entry.Data;
+				            else
+					            data.Data.Add(entry.Data);
+                            break;
+                        case QueueType.delete:
+                            Savable save = data.Data.Where(d => d.Id == entry.Data.Id).FirstOrDefault();
+                            if (save != null)
+                                data.Data.Remove(save);
+                            break;
+                    }
+			    }
+
+			    Set(data);
+			    _queue.Clear();
+            }
+
 			_lastQueueRunTime = Time.unscaledTime;
 		}
 	}
