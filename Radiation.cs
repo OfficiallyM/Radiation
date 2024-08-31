@@ -309,7 +309,7 @@ namespace Radiation
 			if (!rads.HasValue)
 				rads = 0;
 
-			GUI.Button(new Rect(300, 0, 300, 20), $"{_lookingAt.name}");
+			GUI.Button(new Rect(300, 0, 300, 20), $"{_lookingAt.name.Replace("(Clone)", string.Empty)}");
 			GUI.Button(new Rect(300, 20, 300, 20), $"Object rads: {Math.Round((double)rads * 100, 2)}");
 		}
 	}

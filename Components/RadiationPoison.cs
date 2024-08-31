@@ -191,7 +191,7 @@ namespace Radiation.Components
                     y += 20f;
                     foreach (var radioactive in RadiationController.I.radioactives.Where(r => !r.IsSafe() && r.GetRadiationLevel(gameObject.transform.position) > 0))
                     {
-                        GUI.Button(new Rect(0, y, 300, 20), $"{radioactive.name} - {Math.Round((double)radioactive.GetRadiationLevel(gameObject.transform.position) * 100, 2)}");
+                        GUI.Button(new Rect(0, y, 300, 20), $"{radioactive.name.Replace("(Clone)", string.Empty)} - {Math.Round((double)radioactive.GetRadiationLevel(gameObject.transform.position) * 100, 2)}");
                         y += 20f;
                     }
                 }
