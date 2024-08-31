@@ -58,6 +58,7 @@ namespace Radiation.Components
 
 		public void Start()
 		{
+            Logger.Log($"Radioactive start for {name}", Logger.LogLevel.Debug);
 			_zoneType = gameObject.GetComponent<buildingscript>() != null ? RadiationZoneType.Zone : RadiationZoneType.Object;
 
             // Attempt to load from save data.
@@ -70,6 +71,7 @@ namespace Radiation.Components
                 _type = (RadiationType)saveData.RadiationType;
                 _radiationLevel = saveData.RadiationLevel;
                 _distance = saveData.Distance;
+                Logger.Log("Loaded from save data", Logger.LogLevel.Debug);
             }
 
 			if (_isRandom)
@@ -90,8 +92,11 @@ namespace Radiation.Components
 					distanceMax = 200f;
 
 					// 1/2 chance of zone being a safe zone.
-					if (random.Next(0, 4) <= 1)
-						_type = RadiationType.Safe;
+					if (random.Next(0, 4) <= 1 || name.Contains("haz02"))
+                    {
+                        levelMin = 0;
+                        levelMax = 0;
+                    }
 				}
 				else
 				{
@@ -116,13 +121,17 @@ namespace Radiation.Components
 					}
 				}
 
-                // Divide radiation level by the number of child parts to average it across all of them.
-                int childCount = 1;
-                partconditionscript rootPart = gameObject.GetComponent<partconditionscript>();
-                if (rootPart != null)
-                    childCount = rootPart.childs.Count;
+                _radiationLevel = (float)random.Next((int)levelMin * 100, (int)(levelMax * 100) + 1) / 100;
 
-                _radiationLevel = (float)random.Next((int)levelMin * 100, (int)(levelMax * 100) + 1) / childCount / 100;
+                // Divide radiation level by the number of child parts to average it across all of them.
+                partconditionscript rootPart = gameObject.GetComponent<partconditionscript>();
+                if (rootPart != null && rootPart.childs.Count > 0)
+                {
+                    _radiationLevel /= rootPart.childs.Count;
+                }
+
+                _type = _radiationLevel > 0 ? RadiationType.Radioactive : RadiationType.Safe;
+
 				_distance = random.Next((int)distanceMin, (int)distanceMax);
 
                 // Apply radioactive to any object children.
@@ -154,7 +163,11 @@ namespace Radiation.Components
                     RadiationLevel = _radiationLevel,
                     Distance = _distance,
                 });
+
+                Logger.Log("Randomised data", Logger.LogLevel.Debug);
             }
+
+            Logger.Log($"Now tracking {name}, type: {_type}, radiation level: {_radiationLevel}, distance: {_distance}", Logger.LogLevel.Debug);
 
 			// Track all radioactive zones/objects.
 			RadiationController.I.radioactives.Add(this);

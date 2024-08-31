@@ -22,6 +22,9 @@ namespace Radiation.Components
 				System.Random random = new System.Random(component1.idInSave);
 				if (IsGauge(component1.idInSave))
 				{
+                    // Ensure all geiger counters are not radioactive.
+                    gameObject.GetComponent<Radioactive>()?.Init(Radioactive.RadiationType.Safe, 0, 0);
+
 					RemoveAllModClasses();
 					gameObject.GetComponentInChildren<MeshRenderer>().enabled = false;
 					compassscript component2 = gameObject.GetComponent<compassscript>();

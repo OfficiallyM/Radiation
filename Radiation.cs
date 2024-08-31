@@ -7,8 +7,6 @@ using System.Linq;
 using System.Reflection;
 using TLDLoader;
 using UnityEngine;
-
-//using AAAFramework;
 using Logger = Radiation.Utilities.Logger;
 
 namespace Radiation
@@ -94,6 +92,7 @@ namespace Radiation
 			{
 				"post",
 				"phonebooth",
+                "kut",
 			};
 			foreach (GameObject building in itemdatabase.d.buildings)
 			{
