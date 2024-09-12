@@ -16,7 +16,7 @@ namespace Radiation.Core
     [DataContract]
     internal sealed class RadioactiveData : Savable
     {
-        [DataMember] public int RadiationType { get; set;  }
+        [DataMember] public int RadiationType { get; set; }
         [DataMember] public float RadiationLevel { get; set; }
         [DataMember] public float Distance { get; set; }
     }

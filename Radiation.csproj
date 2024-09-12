@@ -69,7 +69,7 @@
     <Compile Include="Components\Gauge.cs" />
     <Compile Include="Components\RadiationResist.cs" />
     <Compile Include="Components\RadiationAway.cs" />
-    <Compile Include="Components\RadiationAwaySickness.cs" />
+    <Compile Include="Components\CameraEffect.cs" />
     <Compile Include="Components\ItemSpawner.cs" />
     <Compile Include="Components\RadiationController.cs" />
     <Compile Include="Components\NPCRadiationPoison.cs" />

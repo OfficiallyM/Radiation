@@ -71,7 +71,7 @@ namespace Radiation.Components
                 _type = (RadiationType)saveData.RadiationType;
                 _radiationLevel = saveData.RadiationLevel;
                 _distance = saveData.Distance;
-                Logger.Log("Loaded from save data", Logger.LogLevel.Debug);
+                Logger.Log("Using loaded save data", Logger.LogLevel.Debug);
             }
 
 			if (_isRandom)
@@ -164,7 +164,7 @@ namespace Radiation.Components
                     Distance = _distance,
                 });
 
-                Logger.Log("Randomised data", Logger.LogLevel.Debug);
+                Logger.Log("Using randomised data", Logger.LogLevel.Debug);
             }
 
             Logger.Log($"Now tracking {name}, type: {_type}, radiation level: {_radiationLevel}, distance: {_distance}", Logger.LogLevel.Debug);

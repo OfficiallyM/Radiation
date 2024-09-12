@@ -50,7 +50,7 @@ namespace Radiation.Components
 		private void Use()
 		{
 			mainscript.PlayClipAtPoint(Radiation.RadiationAwayInjectClip, transform.position, 1f);
-			RadiationPoison.I.SetRadiationAway(0.07f);
+			RadiationPoison.I.SetRadiationAway(0.1f);
 			gameObject.GetComponent<tosaveitemscript>().removeFromMemory = true;
 			DestroyImmediate(gameObject);
 		}

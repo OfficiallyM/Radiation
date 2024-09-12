@@ -15,8 +15,6 @@ namespace Radiation.Components
 
 		// Radiation poison variables.
 		private float _radiationLevel = 0;
-		private float _defaultMaxRadiation = 1;
-		private float _maxRadiation = 0;
 		private float _dangerLevel = 0.7f;
 		private float _poisonMultiplier = 0.1f;
 		private bool _appliedAIChanges = false;
@@ -29,8 +27,6 @@ namespace Radiation.Components
 
 		public void Start()
 		{
-			SetMaxRadiation(_defaultMaxRadiation);
-
 			_save = gameObject.GetComponent<tosaveitemscript>();
 			if (_save == null) return;
 
@@ -74,14 +70,14 @@ namespace Radiation.Components
 
 			bool dataUpdate = true;
 
-			if (_radiationLevel == _maxRadiation)
+			if (_radiationLevel == 1)
 				dataUpdate = false;
 
 			if (dataUpdate && RadiationController.I.IsRadiationDangerous(radiation))
 			{
 				// Radiation level is dangerous, increase the player radiation levels.
 				float change = radiation * _poisonMultiplier;
-				_radiationLevel = Mathf.Clamp(_radiationLevel + change * Time.deltaTime, 0, _maxRadiation);
+				_radiationLevel = Mathf.Clamp01(_radiationLevel + change * Time.deltaTime);
 			}
 
 			if (_radiationLevel >= _dangerLevel && !_appliedAIChanges)
@@ -185,23 +181,6 @@ namespace Radiation.Components
 			}
 
             _areChangesApplying = false;
-		}
-
-		/// <summary>
-		/// Set maximum radiation level.
-		/// </summary>
-		/// <param name="maxRadiation">New maximum radiation level</param>
-		public void SetMaxRadiation(float maxRadiation)
-		{
-			_maxRadiation = maxRadiation;
-		}
-
-		/// <summary>
-		/// Reset maximum radiation level to default.
-		/// </summary>
-		public void ResetMaxRadiation()
-		{
-			_maxRadiation = _defaultMaxRadiation;
 		}
 	}
 }

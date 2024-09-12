@@ -2,7 +2,6 @@
 using Radiation.Utilities;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using TLDLoader;
@@ -17,6 +16,7 @@ namespace Radiation
 		internal static GameObject RadAwayPrefab;
 		internal static GameObject RadResistPrefab;
 		internal static Shader RadiationAwaySicknessShader;
+        internal static Shader GrainShader;
 		internal static AudioClip RadiationAwayInjectClip;
 		internal static Sprite RadiationAwaySprite;
 		internal static Sprite RadiationResistSprite;
@@ -24,16 +24,16 @@ namespace Radiation
 		public override string ID => nameof(Radiation);
 		public override string Name => nameof(Radiation);
 		public override string Author => "M-, TR";
-		public override string Version => "1.1.0";
+		public override string Version => "2.0.0";
 		public override bool LoadInDB => true;
 
 		internal static Mod mod;
 
 		// Config variables.
-		private static readonly float _radiationPoisonMultiplierDefault = 0.1f;
-		private static float _radiationPoisonMultiplier = 0.1f;
-		private static readonly float _radiationPoisonDissipationMultiplierDefault = 0.05f;
-		private static float _radiationPoisonDissipationMultiplier = 0.05f;
+		private static readonly float _radiationPoisonMultiplierDefault = 0.01f;
+		private static float _radiationPoisonMultiplier = 0.01f;
+		private static readonly float _radiationPoisonDissipationMultiplierDefault = 0.005f;
+		private static float _radiationPoisonDissipationMultiplier = 0.005f;
 		internal static bool disableUntilGeigerCounter = false;
 		internal static bool debug = false;
         internal static bool debugShowNearbyRadioactives = false;
@@ -43,6 +43,7 @@ namespace Radiation
 		internal static bool hasFoundGeigerCounter = false;
 
 		private GameObject _lookingAt;
+        private GameObject _gauge;
 
 		public override void Config()
 		{
@@ -141,6 +142,7 @@ namespace Radiation
 			RadAwayPrefab = assetBundle.LoadAsset<GameObject>("RadAway");
 			RadResistPrefab = assetBundle.LoadAsset<GameObject>("RadResist");
 			RadiationAwaySicknessShader = assetBundle.LoadAsset<Shader>("RadiationAwaySickness.shader");
+            GrainShader = assetBundle.LoadAsset<Shader>("Grain.shader");
 			RadiationAwayInjectClip = assetBundle.LoadAsset<AudioClip>("Inject.wav");
 			RadiationAwaySprite = assetBundle.LoadAsset<Sprite>("RadAway.png");
 			RadiationResistSprite = assetBundle.LoadAsset<Sprite>("RadResist.png");
@@ -189,12 +191,12 @@ namespace Radiation
 				GameObject gaugePlaceholder = new GameObject("GaugePlaceholder");
 				gaugePlaceholder.transform.SetParent(mainscript.M.transform);
 				gaugePlaceholder.SetActive(false);
-				GameObject gauge = new GameObject("Geiger counter");
-				gauge.transform.SetParent(gaugePlaceholder.transform, false);
-				UnityEngine.Object.Instantiate(itemdatabase.d.gww2compass, gauge.transform, false).transform.Rotate(0f, 180f, 0f);
-				gauge.AddComponent<GaugeSpawner>();
-				itemdatabase.d.items = Enumerable.Append(itemdatabase.d.items, gauge).ToArray();
-				gauge.GetComponentInChildren<Collider>().enabled = false;
+				_gauge = new GameObject("Geiger counter");
+                _gauge.transform.SetParent(gaugePlaceholder.transform, false);
+				UnityEngine.Object.Instantiate(itemdatabase.d.gww2compass, _gauge.transform, false).transform.Rotate(0f, 180f, 0f);
+                _gauge.AddComponent<GaugeSpawner>();
+				itemdatabase.d.items = Enumerable.Append(itemdatabase.d.items, _gauge).ToArray();
+                _gauge.GetComponentInChildren<Collider>().enabled = false;
 			}
 			catch (Exception ex)
 			{
@@ -209,9 +211,15 @@ namespace Radiation
 			// Apply radioactivity when starting a new game.
 			if (mainscript.M.menu.DFMS.load) return;
 
+            Transform bikeGaugeTransform = null;
+
 			foreach (Collider collider in Physics.OverlapSphere(mainscript.M.player.transform.position, 400f))
 			{
 				GameObject root = collider.transform.root.gameObject;
+
+                // Store bike gauge transform to spawn a geiger counter with it.
+                if (root.name.ToLower().Contains("kmh") && bikeGaugeTransform == null)
+                    bikeGaugeTransform = root.transform;
 
                 CreateAsSafe(root);
 
@@ -219,6 +227,10 @@ namespace Radiation
                 foreach (tosaveitemscript save in root.GetComponentsInChildren<tosaveitemscript>())
                     CreateAsSafe(save.gameObject);
 			}
+
+            // Spawn a geiger counter in the starter house.
+            if (bikeGaugeTransform != null)
+                UnityEngine.Object.Instantiate(_gauge, bikeGaugeTransform.position + Vector3.down * 0.1f, bikeGaugeTransform.rotation);
 		}
 
         /// <summary>

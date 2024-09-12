@@ -17,6 +17,7 @@ namespace Radiation.Utilities
 		private static float _lastQueueRunTime = 0;
 		private static List<QueueEntry> _queue = new List<QueueEntry>();
 		private static readonly int _queueInterval = 2;
+        private static bool _isQueueRunning = false;
 
 		/// <summary>
 		/// Read/write data to game save.
@@ -177,7 +178,7 @@ namespace Radiation.Utilities
         /// <returns>Radioactive data if exists, otherwise null</returns>
         internal static RadioactiveData GetRadioactiveData(int id, Vector3 position)
         {
-            return (RadioactiveData)Get().Data?.Where(d => ((id != -1 && id == d.Id) || (id == -1 && Vector3.Distance(d.Position.Value, position) < 2)) && d.Type == "radioactive").FirstOrDefault();
+            return (RadioactiveData)Get().Data?.Where(d => ((id != -1 && id == d.Id) || (id == -1 && d.Position.HasValue && Vector3.Distance(d.Position.Value, position) < 2)) && d.Type == "radioactive").FirstOrDefault();
         }
 
 		/// <summary>
@@ -209,11 +210,12 @@ namespace Radiation.Utilities
 			if (currentQueueInterval < _queueInterval)
 				return;
 
-            if (_queue.Count > 0)
+            if (_queue.Count > 0 && !_isQueueRunning)
             {
+                _isQueueRunning = true;
                 int upserts = _queue.Where(q => q.QueueType == QueueType.upsert).ToList().Count;
                 int deletes = _queue.Where(q => q.QueueType == QueueType.delete).ToList().Count;
-                Logger.Log($"Processing queue: {_queue.Count} items, {upserts} upserts, {deletes} deletes", Logger.LogLevel.Debug);
+                Logger.Log($"Processing queue: {_queue.Count} items - {upserts} upserts, {deletes} deletes", Logger.LogLevel.Debug);
 
 			    SaveData data = Get();
                 if (data.Data == null)
@@ -240,6 +242,7 @@ namespace Radiation.Utilities
 
 			    Set(data);
 			    _queue.Clear();
+                _isQueueRunning = false;
             }
 
 			_lastQueueRunTime = Time.unscaledTime;
