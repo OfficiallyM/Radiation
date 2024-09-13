@@ -42,30 +42,42 @@ namespace Radiation.Components
 			I = this;
 		}
 
-		public void Start()
+		private void Init()
 		{
-			PoisonData poison = Save.GetPoisonData(0);
-			if (poison != null)
-			{
-				// Load existing data.
-				_radiationLevel = poison.RadiationLevel;
-				_radiationAway = poison.RadAway;
-			}
-
 			_survival = gameObject.GetComponent<survivalscript>();
 			if (_survival != null)
 			{
 				_defaultFoodLoss = _survival.foodLoss;
 			}
 
+			PoisonData poison = Save.GetPoisonData(0);
+            if (poison != null)
+            {
+                // Load existing data.
+                _radiationLevel = poison.RadiationLevel;
+                _radiationAway = poison.RadAway;
+                _radiationResistance = poison.RadResist;
+                _radiationResistanceLength = poison.RadResistLength;
+                _radiationResistanceStacks = poison.RadResistStacks;
+
+                Logger.Log($"Loading poison save data:\nRads: {_radiationLevel}\nRadAway: {_radiationAway}\nRadResist: {_radiationResistance}\nRadResist Length: {_radiationResistanceLength}\nRadResist stacks: {_radiationResistanceStacks}");
+
+                if (_survival != null && _radiationResistanceStacks > 0)
+                {
+                    // Water loss is based off foodLoss, the waterLoss property is unused.
+                    _survival.foodLoss *= 5.5f / _radiationResistanceStacks;
+                }
+            }
+
 			_started = true;
 		}
 
 		public void Update()
 		{
+            // Can't load save data during Start() as it's too early so load on first update tick.
 			if (!_started)
 			{
-				Start();
+                Init();
 				return;
 			}
 
@@ -82,12 +94,13 @@ namespace Radiation.Components
 			float change = -(_dissipationMultiplier * (_radiationStage + 1)) - radaway;
 			if (RadiationController.I.IsRadiationDangerous(radiation))
 			{
-				// Radiation level is dangerous, increase the player radiation levels.
-				change = radiation * _poisonMultiplier;
-
-				// Factor in RadResist if not applied during danger.
+                // Radiation level is dangerous, increase the player radiation levels.
+                float poisonAmount = _poisonMultiplier;
+				// Factor in RadResist.
 				if (_radiationResistance > 0)
-					change -= _radiationResistance;
+                    poisonAmount -= _radiationResistance;
+                change = radiation * poisonAmount;
+
                 change = Mathf.Clamp(change, 0, _maxRadiationLevel);
 			}
 			else if (_radiationLevel == 0)
@@ -140,16 +153,19 @@ namespace Radiation.Components
 				dataUpdate = true;
 			}
 
-            // TODO: Save radresist length, amount and stacks.
-
+            // Tick down resistance length.
 			if (_radiationResistanceLength > 0)
 			{
 				_radiationResistanceLength = Mathf.Clamp(_radiationResistanceLength - (1f * Time.deltaTime), 0, _radiationResistanceLength);
-			}
+                dataUpdate = true;
+            }
 
 			// RadResist has ran out, decrease the value.
 			if (_radiationResistanceLength == 0 && _radiationResistance > 0)
+            {
 				_radiationResistance = Mathf.Clamp01(_radiationResistance -= 0.05f * Time.deltaTime);
+                dataUpdate = true;
+            }
 
 			if (sickness != null)
 				// TODO: Not quite happy with the effect, it's a sharp cut off when it ends.
@@ -169,19 +185,11 @@ namespace Radiation.Components
 				{
 					_survival.foodLoss = _defaultFoodLoss;
 				}
-			}
+                dataUpdate = true;
+            }
 
 			if (dataUpdate) 
-			{ 
-				Save.Upsert(new PoisonData()
-				{
-					// Use Id 0 to store the player data.
-					Id = 0,
-                    Type = "poison",
-					RadiationLevel = _radiationLevel,
-					RadAway = _radiationAway,
-				});
-			}
+                SaveData();
 
 			if (_radiationLevel >= _damageLevel)
 			{
@@ -195,10 +203,11 @@ namespace Radiation.Components
 		{
 			if (Radiation.debug)
 			{
+                PoisonData saveData = Save.GetPoisonData(0);
 				float y = 0;
 				GUI.Button(new Rect(0, y, 300, 20), $"Found geiger counter: {(Radiation.hasFoundGeigerCounter ? "Yes" : "No")}");
 				y += 20f;
-				GUI.Button(new Rect(0, y, 300, 20), $"Rads: {Math.Round(_radiationLevel * 100, 2)}/{Math.Round(_maxRadiationLevel * 100, 2)} (Stage: {_radiationStage + 1})");
+				GUI.Button(new Rect(0, y, 300, 20), $"Rads: {Math.Round(_radiationLevel * 100, 2)}/{Math.Round(_maxRadiationLevel * 100, 2)} (Stage: {_radiationStage + 1}) ({Math.Round(saveData.RadiationLevel * 100, 2)} saved)");
 				y += 20f;
 				GUI.Button(new Rect(0, y, 300, 20), $"Level: {Math.Round((double)RadiationController.I.GetRadiationLevel(gameObject.transform.position) * 100, 2)}");
 				y += 20f;
@@ -238,6 +247,24 @@ namespace Radiation.Components
                 }
             }
 		}
+
+        /// <summary>
+        /// Save poison data.
+        /// </summary>
+        private void SaveData()
+        {
+            Save.Upsert(new PoisonData()
+            {
+                // Use Id 0 to store the player data.
+                Id = 0,
+                Type = "poison",
+                RadiationLevel = _radiationLevel,
+                RadAway = _radiationAway,
+                RadResist = _radiationResistance,
+                RadResistLength = _radiationResistanceLength,
+                RadResistStacks = _radiationResistanceStacks,
+            });
+        }
 
         /// <summary>
         /// Apply shader to player camera.
@@ -283,6 +310,8 @@ namespace Radiation.Components
 				_radiationAwayAppliedWhenDangerous = true;
 
             sickness = ApplyShader(Radiation.RadiationAwaySicknessShader);
+
+            SaveData();
         }
 
 		/// <summary>
@@ -323,6 +352,8 @@ namespace Radiation.Components
 				// Water loss is based off foodLoss, the waterLoss property is unused.
 				_survival.foodLoss *= 5.5f / _radiationResistanceStacks;
 			}
-		}
+
+            SaveData();
+        }
 	}
 }

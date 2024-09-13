@@ -26,6 +26,9 @@ namespace Radiation.Core
 	{
 		[DataMember] public float RadiationLevel { get; set; } = 0;
 		[DataMember] public float RadAway { get; set; } = 0;
+        [DataMember] public float RadResist { get; set; } = 0;
+        [DataMember] public float RadResistLength { get; set; } = 0;
+        [DataMember] public int RadResistStacks { get; set; } = 0;
 		[DataMember] public bool IsNPCTransformed { get; set; } = false;
 	}
 

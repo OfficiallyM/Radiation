@@ -226,14 +226,18 @@ namespace Radiation.Utilities
                     switch (entry.QueueType)
                     {
                         case QueueType.upsert:
-				            Savable existing = data.Data.Where(d => d.Id == entry.Data.Id).FirstOrDefault();
+				            Savable existing = data.Data.Where(d => d.Id == entry.Data.Id && d.Type == entry.Data.Type).FirstOrDefault();
 				            if (existing != null)
+                            {
+                                int index = data.Data.IndexOf(existing);
                                 existing = entry.Data;
+                                data.Data[index] = existing;
+                            }
 				            else
 					            data.Data.Add(entry.Data);
                             break;
                         case QueueType.delete:
-                            Savable save = data.Data.Where(d => d.Id == entry.Data.Id).FirstOrDefault();
+                            Savable save = data.Data.Where(d => d.Id == entry.Data.Id && d.Type == entry.Data.Type).FirstOrDefault();
                             if (save != null)
                                 data.Data.Remove(save);
                             break;
